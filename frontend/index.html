@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIAMANTECH - Joyería Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <header class="bg-indigo-950 shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-10 py-6 grid grid-cols-3 items-center">
+            <div class="hidden md:flex space-x-20 justify-start">
+                <a href="#inicio" class="nav-link text-white hover:text-blue-300">INICIO</a>
+                <a href="#catalogo" class="nav-link text-white hover:text-blue-300">CATÁLOGO</a>
+                <a href="#nosotros" class="nav-link text-white hover:text-blue-300">NOSOTROS</a>
+            </div>
+            <div class="text-center col-start-1 md:col-start-2">
+                 <a href="#inicio"  class="nav-link text-3xl font-bold text-white">DIAMANTECH</a>
+            </div>
+            <div class="hidden md:flex space-x-20 items-center justify-end col-start-3">
+                <a href="#equipo-seccion" class="nav-link text-white hover:text-blue-300">NUESTRO EQUIPO</a> 
+                <a href="#" id="loginBtn" class="text-white hover:text-blue-300">LOG IN</a>
+                <button id="cartToggleBtn" class="relative text-white hover:text-blue-300">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    <span id="cartItemCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </button>
+            </div>
+            <div class="md:hidden flex justify-between items-center col-span-3 mt-2 md:mt-0">
+                 <button id="mobileMenuBtn" class="text-white focus:outline-none">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+                 <button id="cartToggleBtnMobileHeader" class="relative text-white hover:text-blue-300 md:hidden">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    <span id="cartItemCountMobileHeader" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                </button>
+            </div>
+        </nav>
+        <div id="mobileMenu" class="px-3 hidden md:hidden bg-indigo-950 shadow-lg">
+            <a href="#inicio" class="nav-link block px-20 py-3 text-white hover:bg-blue-300 hover:text-white">INICIO</a>
+            <a href="#catalogo" class="nav-link block px-20 py-3 text-white hover:bg-blue-300 hover:text-white">CATÁLOGO</a>
+            <a href="#nosotros" class="nav-link block px-20 py-3 text-white hover:bg-blue-300 hover:text-white">NOSOTROS</a>
+            <a href="#equipo-seccion" class="nav-link block px-20 py-3 text-white hover:bg-blue-300 hover:text-white">EQUIPO</a> 
+            <a href="#" id="loginBtnMobile" class="block px-20 py-3 text-white hover:bg-blue-500 hover:text-white">LOG IN</a>
+        </div>
+    </header>
+
+    <div id="mainPageContent">
+        <section id="inicio" class="hero-bg h-screen flex items-center justify-center text-white rounded-b-lg shadow-xl">
+            <div class="text-center bg-black bg-opacity-60 p-10 rounded-lg">
+                <h1 class="text-5xl md:text-7xl font-extrabold mb-6">DIAMANTECH</h1>
+                <p class="text-xl md:text-2xl font-light">Joyas Exclusivas para Momentos Inolvidables</p>
+            </div>
+        </section>
+
+        <section id="catalogo" class="py-20 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-16 text-blue-900">NUESTRO CATÁLOGO</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                    <div class="product-card bg-white p-6 rounded-lg shadow-xl text-center cursor-pointer" data-category="Anillos">
+                        <img src="img/cat_anillo.jpg" alt="[Imagen de Anillos]" class="w-full h-56 object-cover rounded-md mb-5 mx-auto">
+                        <h3 class="text-2xl font-semibold mb-2 text-blue-600">Anillos</h3>
+                        <p class="text-gray-600">Descubre nuestra colección de anillos elegantes.</p>
+                    </div>
+                    <div class="product-card bg-white p-6 rounded-lg shadow-xl text-center cursor-pointer" data-category="Pendientes">
+                        <img src="img/catalog_arete.jpg" alt="[Imagen de Pendientes]" class="w-full h-56 object-cover rounded-md mb-5 mx-auto">
+                        <h3 class="text-2xl font-semibold mb-2 text-blue-600">Pendientes</h3>
+                        <p class="text-gray-600">Pendientes únicos para cada ocasión.</p>
+                    </div>
+                    <div class="product-card bg-white p-6 rounded-lg shadow-xl text-center cursor-pointer" data-category="Collares">
+                        <img src="img/catalog_collar.jpg" alt="[Imagen de Collares]" class="w-full h-56 object-cover rounded-md mb-5 mx-auto">
+                        <h3 class="text-2xl font-semibold mb-2 text-blue-600">Collares</h3>
+                        <p class="text-gray-600">Collares que realzan tu belleza.</p>
+                    </div>
+                    <div class="product-card bg-white p-6 rounded-lg shadow-xl text-center cursor-pointer" data-category="Pulseras">
+                        <img src="img/cat_pulsera-1.jpeg" alt="[Imagen de Pulseras]" class="w-full h-56 object-cover rounded-md mb-5 mx-auto">
+                        <h3 class="text-2xl font-semibold mb-2 text-blue-600">Pulseras</h3>
+                        <p class="text-gray-600">Pulseras con diseños sofisticados.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="nosotros" class="py-20 bg-blue-900 text-white">
+            <div class="container mx-auto px-6">
+                
+                <div class="flex flex-col md:flex-row items-center gap-12 mb-16">
+                    <div class="md:w-1/2">
+                        <img src="img/aboutUs_index.jpg" alt="[Imagen del equipo de Diamantech]" class="rounded-lg shadow-xl w-full">
+                    </div>
+                    <div class="nos md:w-1/2">
+                        <h2 class="text-4xl font-bold text-center mb-16">ACERCA DE NOSOTROS</h2>
+                        <p class="text-lg mb-4 leading-relaxed">En DIAMANTECH, fusionamos la belleza atemporal de la alta joyería con la innovación tecnológica más avanzada. Nacimos de la visión de crear piezas que no solo adornen, sino que también enriquezcan la vida diaria de quienes las portan, ofreciendo una conexión fluida entre el lujo y la funcionalidad.</p>
+                        <p class="text-lg mb-4 leading-relaxed">Nuestro compromiso es con la excelencia artesanal, utilizando materiales de la más alta calidad y diamantes éticamente seleccionados, integrados con tecnología intuitiva y discreta. Cada creación es una obra de arte diseñada para el individuo moderno y sofisticado.</p>
+                        <p class="text-lg mb-4 leading-relaxed"><b>Creemos que el futuro del lujo es inteligente, personal y consciente.</b></p>
+                        <p class="text-lg leading-relaxed">Explora un mundo donde la tradición se encuentra con el mañana, y la elegancia se potencia con la innovación. Bienvenido a la revolución de la joyería.</p>
+                    </div>
+                </div>
+                <div id="equipo-seccion"> 
+                    <h2 class="text-4xl font-bold text-center mb-12 pt-10">NUESTRO EQUIPO</h2> 
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 text-center">
+                        <div class="bg-white bg-opacity-20 p-8 rounded-lg shadow-lg backdrop-blur-md min-h-[320px] flex flex-col justify-center">
+                            <img src="img/equipo/equipo1.jpg"  class=" mx-auto mb-5 ">
+                            <h4 class="text-xl font-semibold mb-4">Mónica</h4>
+                            <p class="text-md mb-4 text-center">Diseñadora Principal</p>
+                            <p class="text-sm text-center">"Fusiono arte y tecnología para crear piezas que cuentan historias y se adaptan a tu vida."</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-8 rounded-lg shadow-lg backdrop-blur-md min-h-[320px] flex flex-col justify-center">
+                            <img src="img/equipo/equipo3.jpg"  class=" mx-auto mb-5">
+                            <h4 class="text-xl font-semibold mb-4">Juliana</h4>
+                            <p class="text-md mb-4 text-center">Fundadora de DIAMANTECH</p>
+                            <p class="text-sm text-center">“Las joyas son algo muy personal, deben contar una historia sobre quien las lleva”</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 p-8 rounded-lg shadow-lg backdrop-blur-md min-h-[320px] flex flex-col justify-center">
+                            <img src="img/equipo/equipo2.jpg"  class=" mx-auto mb-5">
+                            <h4 class="text-xl font-semibold mb-4">Sofía</h4>
+                            <p class="text-md mb-4 text-center">Innovación Tecnológica</p>
+                            <p class="text-sm text-center">"Mi pasión es integrar la tecnología más avanzada de forma invisible y elegante en cada joya."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div> 
+    <section id="categoryView" class="view-hidden container mx-auto px-6 py-12">
+        <button id="backToMainCatalogBtn" class="mb-8 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300">
+            <i class="fas fa-arrow-left mr-2"></i>Volver al Catálogo Principal
+        </button>
+        <h2 id="categoryTitle" class="text-3xl font-bold text-center mb-12 text-blue-700">Catálogo: [Categoría]</h2>
+        <div id="categoryProductsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            </div>
+    </section>
+
+    <section id="checkoutPage" class="view-hidden container mx-auto px-6 py-12">
+         <button id="backToCartBtn" class="mb-8 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300">
+            <i class="fas fa-arrow-left mr-2"></i>Volver al Carrito
+        </button>
+        <h2 class="text-3xl font-bold text-center mb-12 text-blue-700">Finalizar Compra</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div class="bg-white p-8 rounded-lg shadow-xl">
+                <h3 class="text-xl font-semibold mb-6 text-gray-700">Información de Envío</h3>
+                <form id="shippingForm">
+                    <div class="mb-4">
+                        <label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                        <input type="text" id="fullName" name="fullName" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                        <input type="text" id="address" name="address" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                    <!-- <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="city" class="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+                            <input type="text" id="city" name="city" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        <div>
+                            <label for="postalCode" class="block text-sm font-medium text-gray-700 mb-1">Código Postal</label>
+                            <input type="text" id="postalCode" name="postalCode" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required>
+                        </div> 
+                    </div> -->
+                     <div class="mb-4">
+                        <label for="emailCheckout" class="block text-sm font-medium text-gray-700 mb-1">Email de Contacto</label>
+                        <input type="email" id="emailCheckout" name="emailCheckout" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                </form>
+            </div>
+            <div class="bg-white p-8 rounded-lg shadow-xl">
+                <h3 class="text-xl font-semibold mb-6 text-gray-700">Resumen del Pedido</h3>
+                <div id="checkoutOrderSummary" class="space-y-3 mb-6">
+                    </div>
+                <div class="border-t pt-4">
+                    <div class="flex justify-between font-bold text-lg mb-1">
+                        <span>Subtotal:</span>
+                        <span id="checkoutSubtotal">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Envío:</span>
+                        <span>$10.00</span> </div>
+                    <div class="flex justify-between font-bold text-xl mb-6">
+                        <span>Total:</span>
+                        <span id="checkoutTotal">$0.00</span>
+                    </div>
+                    <button id="confirmPurchaseBtn" class="btn-confirmar-compra w-full">Confirmar Compra</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 text-white py-10">
+        <div class="container mx-auto px-6 text-center justify-center">
+            <img src="img/logo.png"  class="w-40   mx-auto">
+            <!-- <p class="text-2xl font-bold mb-2">DIAMANTECH</p> -->
+            <p class="mb-4">diamantech@gmail.com</p>
+            <div class="flex justify-center space-x-4">
+                <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+            </div>
+            <p class="mt-6 text-sm text-gray-500">&copy; <span id="currentYear"></span> DIAMANTECH. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <div id="cartModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-end z-[60]">
+        <div class="cart-modal-content bg-white w-full max-w-md h-full shadow-xl p-6 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-blue-700">TU CARRITO</h2>
+                <button id="closeCartBtn" class="text-gray-600 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div id="cartItemsContainer" class="space-y-4 mb-6">
+                </div>
+            <div id="cartEmptyMessage" class="text-gray-500 text-center hidden">Tu carrito está vacío.</div>
+            <div id="cartTotals" class="border-t pt-6">
+                <div class="flex justify-between font-bold text-lg mb-4">
+                    <span>Subtotal:</span>
+                    <span id="cartSubtotalDisplay">$0.00</span>
+                </div>
+                <button id="goToCheckoutBtn" class="btn-pagar w-full">IR A PAGAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[70]">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <div class="flex justify-end">
+                <button id="closeAuthModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div id="loginFormContainer">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6 text-center">Iniciar Sesión</h2>
+                <form id="loginForm">
+                    <div class="mb-4">
+                        <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="loginEmail" name="email" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required placeholder="tu@gmail.com">
+                    </div>
+                    <div class="mb-6">
+                        <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <input type="password" id="loginPassword" name="password" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required placeholder="********">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700 transition duration-300 font-semibold">Ingresar</button>
+                </form>
+                <p class="text-center mt-4 text-sm">
+                    ¿No tienes cuenta? <a href="#" id="showRegisterForm" class="text-blue-600 hover:underline">Regístrate aquí</a>
+                </p>
+            </div>
+            <div id="registerFormContainer" class="hidden">
+                <h2 class="text-2xl font-bold text-blue-700 mb-6 text-center">Crear Cuenta</h2>
+                <form id="registerForm">
+                    <div class="mb-4">
+                        <label for="registerName" class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                        <input type="text" id="registerName" name="name" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required placeholder="Tu Nombre">
+                    </div>
+                    <div class="mb-4">
+                        <label for="registerName" class="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                        <input type="text" id="registerName" name="name" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required placeholder="Tu Apellido">
+                    </div>
+                    <div class="mb-4">
+                        <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="registerEmail" name="email" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required placeholder="tu@email.com">
+                    </div>
+                    <div class="mb-4">
+                        <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                        <input type="password" id="registerPassword" name="password" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required placeholder="********">
+                    </div>
+                     <div class="mb-6">
+                        <label for="registerConfirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
+                        <input type="password" id="registerConfirmPassword" name="confirmPassword" class="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" required placeholder="********">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-md hover:bg-green-700 transition duration-300 font-semibold">Registrarse</button>
+                </form>
+                <p class="text-center mt-4 text-sm">
+                    ¿Ya tienes cuenta? <a href="#" id="showLoginForm" class="text-blue-600 hover:underline">Inicia sesión aquí</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <button id="scrollToTopBtn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 hidden z-40">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+    <script src="js/script.js"></script>
+</body>
+</html>

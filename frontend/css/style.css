@@ -1,0 +1,60 @@
+body {
+    font-family: 'Playfair Display', serif
+}
+p,header{
+    font-family: 'Poppins', sans-serif;
+}
+
+.nos{
+    text-align: justify;
+}
+.hero-bg {
+    background-image: url('/frontend/img/main.jpg');
+    background-size: cover;
+    background-position: center;
+}
+.product-card img, .category-product-card img {
+    transition: transform 0.3s ease;
+}
+.product-card:hover img, .category-product-card:hover img {
+    transform: scale(1.05);
+}
+.modal {
+    display: none; /* Hidden by default */
+}
+.modal.active {
+    display: flex; /* Show when active */
+}
+.cart-modal-content {
+    animation: slideInRight 0.3s ease-out;
+}
+@keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+.btn-pagar, .btn-confirmar-compra {
+    background-color: #3b82f6; /* Azul Tailwind */
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.375rem;
+    text-align: center;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+.btn-pagar:hover, .btn-confirmar-compra:hover {
+    background-color: #2563eb;
+}
+.view-hidden {
+    display: none !important;
+}
+#categoryView, #checkoutPage {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+/* Asegurar que las anclas de las secciones tengan un offset superior para el header fijo */
+section[id] {
+    scroll-margin-top: 70px; /* Ajusta este valor según la altura de tu header */
+}
+footer{
+    text-align: center;
+}
