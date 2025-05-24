@@ -3,12 +3,12 @@ const allMockProducts = [
     { id: 101, category: "Anillos", name: "Anillo Diamante Solitario", price: 1250.00, image: "img/catalogo/anillos/anillo2.jpg", description: "Clásico anillo de compromiso con diamante solitario." },
     { id: 102, category: "Anillos", name: "Anillo Esmeralda Vintage", price: 980.00, image: "img/catalogo/anillos/anillo.jpg", description: "Elegante anillo con esmeralda y diseño vintage." },
     { id: 103, category: "Anillos", name: "Anillo Oro Rosa Moderno", price: 750.00, image: "img/catalogo/anillos/anillor.jpg", description: "Anillo moderno en oro rosa con incrustaciones." },
-    { id: 201, category: "Pendientes", name: "Pendientes Perla Clásicos", price: 320.00, image: "https://placehold.co/300x300/FAF089/975A16?text=Pendientes+Perla", description: "Pendientes de perla cultivada, un toque de elegancia." },
-    { id: 202, category: "Pendientes", name: "Aretes Diamante Brillante", price: 680.00, image: "https://placehold.co/300x300/BEE3F8/2A4365?text=Aretes+Diamante", description: "Aretes brillantes con pequeños diamantes." },
-    { id: 301, category: "Collares", name: "Collar Corazón Zafiro", price: 890.00, image: "https://placehold.co/300x300/A3BFFA/2C5282?text=Collar+Zafiro", description: "Delicado collar con dije de corazón y zafiro." },
-    { id: 302, category: "Collares", name: "Gargantilla Oro Blanco", price: 1100.00, image: "https://placehold.co/300x300/EBF4FF/4299E1?text=Gargantilla+Oro", description: "Sofisticada gargantilla en oro blanco de 18k." },
-    { id: 401, category: "Pulseras", name: "Pulsera Infinito Plata", price: 250.00, image: "https://placehold.co/300x300/D6BCFA/6B46C1?text=Pulsera+Plata", description: "Pulsera de plata con símbolo de infinito." },
-    { id: 402, category: "Pulseras", name: "Brazalete Rígido Dorado", price: 480.00, image: "https://placehold.co/300x300/FBD38D/975A16?text=Brazalete+Dorado", description: "Imponente brazalete rígido bañado en oro." },
+    { id: 201, category: "Pendientes", name: "Pendientes Perla Clásicos", price: 320.00, image: "img/catalogo/aretes/pendientes.jpg", description: "Pendientes de perla cultivada, un toque de elegancia." },
+    { id: 202, category: "Pendientes", name: "Aretes Diamante Brillante", price: 680.00, image: "img/catalogo/aretes/aretes6.jpg", description: "Aretes brillantes con pequeños diamantes." },
+    { id: 301, category: "Collares", name: "Collar Corazón Zafiro", price: 890.00, image: "img/catalogo/collares/collarz", description: "Delicado collar con dije de corazón y zafiro." },
+    { id: 302, category: "Collares", name: "Gargantilla Oro Blanco", price: 1100.00, image: "img/catalogo/collares/collarob", description: "Sofisticada gargantilla en oro blanco de 18k." },
+    { id: 401, category: "Pulseras", name: "Pulsera Infinito Plata", price: 250.00, image: "img/catalogo/pulseras/pulserai", description: "Pulsera de plata con símbolo de infinito." },
+    { id: 402, category: "Pulseras", name: "Brazalete Rígido Dorado", price: 480.00, image: "img/catalogo/pulseras/pulserad", description: "Imponente brazalete rígido bañado en oro." },
 ];
 let cart = [];
     document.addEventListener('DOMContentLoaded', () => {
@@ -327,8 +327,8 @@ let cart = [];
                         const targetId = this.getAttribute('href');
                         const targetElement = document.querySelector(targetId);
                         if (targetElement) {
-                            // Ajustar el comportamiento de scrollIntoView para que tenga en cuenta el header fijo
-                            const headerOffset = 70; // Altura aproximada del header
+                            
+                            const headerOffset = 70; 
                             const elementPosition = targetElement.getBoundingClientRect().top;
                             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
                       
