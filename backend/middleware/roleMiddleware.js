@@ -1,5 +1,5 @@
 // roles es un array de roles permitidos, ej: ['administrador'] o ['administrador', 'editor']
-constauthorizeRoles = (...roles) => {
+const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !req.user.rol) { // Asegúrate que protect haya adjuntado req.user con el rol
         return res.status(403).json({ message: 'Acceso denegado. Rol de usuario no disponible.' });

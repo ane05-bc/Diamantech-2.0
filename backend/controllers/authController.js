@@ -90,13 +90,6 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-// invalide el token en el cliente
-// o si usas refresh tokens, invalidar el refresh token en la BD.
-// const logoutUser = (req, res) => {
-//   // Lógica de logout (principalmente del lado del cliente al eliminar el token)
-//   res.status(200).json({ message: 'Logout exitoso (token debe ser eliminado por el cliente).' });
-// };
-
 module.exports = {
   registerUser,
   loginUser,
