@@ -1,0 +1,11 @@
+/* frontend/css/admin_style.css */
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Estilos adicionales para el panel de admin si son necesarios */
+.admin-nav-btn.active {
+    background-color: #DBEAFE; /* blue-100 */
+    color: #1D4ED8; /* blue-700 */
+    font-weight: 600;
+}

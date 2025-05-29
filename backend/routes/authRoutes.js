@@ -1,10 +1,11 @@
 const express = require('express');
-const { registerUser, loginUser /*, logoutUser*/ } = require('../controllers/authController');
+const { registerUser, loginUser, getDeliveryZones } = require('../controllers/authController');
 
 const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-// router.post('/logout', logoutUser); // Si implementas un endpoint de logout
+router.get('/delivery-zones', getDeliveryZones); 
 
 module.exports = router;
+

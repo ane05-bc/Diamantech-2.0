@@ -1,27 +1,28 @@
-// frontend/js/script.js
+const API_BASE_URL = 'http://localhost:3000/api';
 
-// API Base URL (ajusta si tu backend corre en otro puerto/dominio)
-const API_BASE_URL = 'http://localhost:3000/api'; // Asegúrate que el puerto coincida con tu server.js
-
-// Mock product data (será reemplazado por llamadas a API)
-// const allMockProducts = [ ... ]; // Conservar por si la API falla o para desarrollo inicial
-let allProductsData = []; // Para almacenar productos de la API
-let allCategoriesData = []; // Para almacenar categorías de la API
-
-let cart = []; // El carrito del usuario, se sincronizará con el backend
-let currentUser = null; // Para almacenar información del usuario logueado y token
-let currentOrderDetails = null; // Para almacenar detalles del pedido actual durante el checkout
+let cart = []; 
+let currentUser = null; 
+let currentOrderDetails = null; 
+let deliveryZones = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Selectores de Elementos (sin cambios, pero asegúrate que todos estén)
     const mainPageContent = document.getElementById('mainPageContent');
     const categoryView = document.getElementById('categoryView');
     const checkoutPage = document.getElementById('checkoutPage');
-    const orderConfirmationPage = document.getElementById('orderConfirmationPage'); // NUEVO para mostrar QR y estado
+    const orderConfirmationPage = document.getElementById('orderConfirmationPage');
+    const userProfilePage = document.getElementById('userProfilePage'); 
+    const orderHistoryContainer = document.getElementById('orderHistoryContainer'); 
+    const complaintModal = document.getElementById('complaintModal'); 
+    const closeComplaintModalBtn = document.getElementById('closeComplaintModalBtn'); 
+    const complaintForm = document.getElementById('complaintForm'); 
+    const complaintOrderIdHidden = document.getElementById('complaintOrderIdHidden'); 
+    const viewComplaintModal = document.getElementById('viewComplaintModal'); 
+    const closeViewComplaintModalBtn = document.getElementById('closeViewComplaintModalBtn'); 
+    const viewComplaintDetailsContainer = document.getElementById('viewComplaintDetailsContainer'); 
 
     const cartToggleBtn = document.getElementById('cartToggleBtn');
     const cartToggleBtnMobileHeader = document.getElementById('cartToggleBtnMobileHeader');
-    const cartModal = document.getElementById('cartModal');
+    const cartModalEl = document.getElementById('cartModal'); 
     const closeCartBtn = document.getElementById('closeCartBtn');
     const cartItemsContainer = document.getElementById('cartItemsContainer');
     const cartItemCount = document.getElementById('cartItemCount');
@@ -31,10 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cartTotalsDiv = document.getElementById('cartTotals');
         
     const authModal = document.getElementById('authModal');
-    const loginBtn = document.getElementById('loginBtn'); // Botón "LOG IN" en el header
+    const loginBtn = document.getElementById('loginBtn'); 
     const loginBtnMobile = document.getElementById('loginBtnMobile');
-    const logoutBtn = document.getElementById('logoutBtn'); // NUEVO: Botón de Logout
-    const userGreeting = document.getElementById('userGreeting'); // NUEVO: Saludo al usuario
+    const logoutBtn = document.getElementById('logoutBtn'); 
+    const userGreeting = document.getElementById('userGreeting'); 
+    const profileLink = document.getElementById('profileLink');
 
     const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
     const loginFormContainer = document.getElementById('loginFormContainer');
@@ -43,24 +45,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const showLoginForm = document.getElementById('showLoginForm');
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
+    const deliveryZoneSelect = document.getElementById('registerDeliveryZone');
 
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const mobileMenu = document.getElementById('mobileMenu');
     const scrollToTopBtn = document.getElementById('scrollToTopBtn');
         
-    const mainCatalogCategoriesContainer = document.getElementById('mainCatalogCategories'); // Contenedor para categorías en #catalogo
+    const mainCatalogCategoriesContainer = document.getElementById('mainCatalogCategories'); 
     const categoryTitleEl = document.getElementById('categoryTitle');
     const categoryProductsGridEl = document.getElementById('categoryProductsGrid');
     const backToMainCatalogBtn = document.getElementById('backToMainCatalogBtn');
 
     const goToCheckoutBtn = document.getElementById('goToCheckoutBtn');
-    const backToCartBtn = document.getElementById('backToCartBtn'); // En la página de checkout
-    const shippingForm = document.getElementById('shippingForm'); // Formulario de envío
+    const backToCartBtn = document.getElementById('backToCartBtn'); 
+    const shippingForm = document.getElementById('shippingForm'); 
     const confirmPurchaseBtn = document.getElementById('confirmPurchaseBtn');
     const checkoutOrderSummaryEl = document.getElementById('checkoutOrderSummary');
     const checkoutSubtotalEl = document.getElementById('checkoutSubtotal');
-    const checkoutShippingEl = document.getElementById('checkoutShipping'); // Para mostrar costo de envío
+    const checkoutShippingEl = document.getElementById('checkoutShipping'); 
     const checkoutTotalEl = document.getElementById('checkoutTotal');
+    const checkoutAddressInfo = document.getElementById('checkoutAddressInfo');
 
     // Elementos para la página de confirmación de pedido y QR
     const orderConfirmationTitle = document.getElementById('orderConfirmationTitle');
@@ -76,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('diamantechUser', JSON.stringify(userData));
         currentUser = userData;
         updateUserUI();
-        fetchCart(); // Cargar carrito después de iniciar sesión
+        fetchCart(); 
     }
 
     function getToken() {
@@ -87,20 +91,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const storedUser = localStorage.getItem('diamantechUser');
         if (storedUser) {
             currentUser = JSON.parse(storedUser);
-            // Opcional: verificar si el token aún es válido con un endpoint de 'verifyToken' o 'getProfile'
             updateUserUI();
-            fetchCart(); // Cargar carrito si hay sesión
+            fetchCart();
         } else {
-            updateUserUI(); // Asegura que la UI esté en estado "no logueado"
+            updateUserUI(); 
         }
     }
 
     function clearUserSession() {
         localStorage.removeItem('diamantechUser');
         currentUser = null;
-        cart = []; // Limpiar carrito local al cerrar sesión
+        cart = []; 
         updateUserUI();
-        renderCartItems(); // Actualizar vista del carrito
+        renderCartItems(); 
     }
 
     function isLoggedIn() {
@@ -108,19 +111,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUserUI() {
+        const userGreetingMobile = document.getElementById('userGreetingMobile');
+        const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+        const profileLinkMobile = document.getElementById('profileLinkMobile');
         if (isLoggedIn()) {
             if(loginBtn) loginBtn.classList.add('hidden');
             if(loginBtnMobile) loginBtnMobile.classList.add('hidden');
             if(logoutBtn) logoutBtn.classList.remove('hidden');
+            if(logoutBtnMobile) logoutBtnMobile.classList.remove('hidden');
+            if(profileLink) profileLink.classList.remove('hidden');
+            if(profileLinkMobile) profileLinkMobile.classList.remove('hidden');
+
             if(userGreeting) {
                 userGreeting.textContent = `Hola, ${currentUser.usuario.nombre_completo.split(' ')[0]}`;
                 userGreeting.classList.remove('hidden');
+            }
+            if(userGreetingMobile) { 
+                userGreetingMobile.textContent = `Hola, ${currentUser.usuario.nombre_completo.split(' ')[0]}`;
+                userGreetingMobile.classList.remove('hidden');
             }
         } else {
             if(loginBtn) loginBtn.classList.remove('hidden');
             if(loginBtnMobile) loginBtnMobile.classList.remove('hidden');
             if(logoutBtn) logoutBtn.classList.add('hidden');
+            if(logoutBtnMobile) logoutBtnMobile.classList.add('hidden');
+            if(profileLink) profileLink.classList.add('hidden');
+            if(profileLinkMobile) profileLinkMobile.classList.add('hidden');
             if(userGreeting) userGreeting.classList.add('hidden');
+            if(userGreetingMobile) userGreetingMobile.classList.add('hidden'); 
         }
     }
     
@@ -147,12 +165,14 @@ document.addEventListener('DOMContentLoaded', () => {
         mainPageContent.classList.add('view-hidden');
         categoryView.classList.add('view-hidden');
         checkoutPage.classList.add('view-hidden');
-        orderConfirmationPage.classList.add('view-hidden'); // Ocultar nueva vista
+        orderConfirmationPage.classList.add('view-hidden'); 
+        if(userProfilePage) userProfilePage.classList.add('view-hidden');
             
         if (viewToShow === 'main') mainPageContent.classList.remove('view-hidden');
         if (viewToShow === 'category') categoryView.classList.remove('view-hidden');
         if (viewToShow === 'checkout') checkoutPage.classList.remove('view-hidden');
-        if (viewToShow === 'confirmation') orderConfirmationPage.classList.remove('view-hidden'); // Mostrar nueva vista
+        if (viewToShow === 'confirmation') orderConfirmationPage.classList.remove('view-hidden'); 
+        if (viewToShow === 'profile' && userProfilePage) userProfilePage.classList.remove('view-hidden');
         window.scrollTo(0, 0);
     }
 
@@ -207,9 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 categoryProductsGridEl.innerHTML = '<p class="col-span-full text-center text-gray-500">No hay productos en esta categoría en este momento.</p>';
             } else {
                 productsInCategory.forEach(product => {
-                    // Suponemos que el producto tiene variantes y necesitamos mostrar un producto "base"
-                    // y luego el usuario seleccionará la variante en la página de detalle del producto (no implementada aquí)
-                    // Por ahora, usaremos el precio_base o precio_final_desde si viene del backend
+                   
                     const displayPrice = product.precio_final_desde || product.precio_base;
 
                     const productEl = document.createElement('div');
@@ -223,10 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             <i class="fas fa-cart-plus mr-1"></i> Añadir al Carrito
                         </button>
                     `;
-                    // NOTA: El botón "Añadir al Carrito" aquí es simplificado. 
-                    // Idealmente, llevaría a una página de detalle del producto donde se selecciona la VARIANTE.
-                    // Por ahora, este botón necesitará una lógica para seleccionar una variante por defecto o abrir un modal de variantes.
-                    // Para la demostración actual, asumiremos que al hacer clic se añade la "primera variante disponible" o se pide al usuario que inicie sesión.
                     categoryProductsGridEl.appendChild(productEl);
                 });
                 document.querySelectorAll('.add-to-cart-btn').forEach(button => {
@@ -238,16 +252,30 @@ document.addEventListener('DOMContentLoaded', () => {
             categoryProductsGridEl.innerHTML = `<p class="col-span-full text-center text-red-500">${error.message}. Intenta más tarde.</p>`;
         }
     }
-    
+    async function fetchDeliveryZones() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/delivery-zones`);
+            if (!response.ok) throw new Error('Error al cargar zonas de entrega');
+            deliveryZones = await response.json();
+            populateDeliveryZonesSelect();
+        } catch (error) {
+            console.error("Error en fetchDeliveryZones:", error);
+        }
+    }
+    function populateDeliveryZonesSelect() {
+        if (!deliveryZoneSelect) return;
+        deliveryZoneSelect.innerHTML = '<option value="">Selecciona una zona...</option>';
+        deliveryZones.forEach(zone => {
+            const option = document.createElement('option');
+            option.value = zone.id_zona;
+            option.textContent = `${zone.nombre_zona} (Bs. ${parseFloat(zone.costo_envio_zona).toFixed(2)})`;
+            deliveryZoneSelect.appendChild(option);
+        });
+    }
     if(backToMainCatalogBtn) backToMainCatalogBtn.addEventListener('click', () => showView('main'));
 
     // --- Lógica del Carrito ---
-    function toggleCartModal() {
-        cartModal.classList.toggle('active');
-        if (cartModal.classList.contains('active')) {
-            renderCartItems(); // Siempre renderizar al abrir para reflejar cambios
-        }
-    }
+    function toggleCartModal() { if (cartModalEl) cartModalEl.classList.toggle('active'); if (cartModalEl && cartModalEl.classList.contains('active')) renderCartItems(); }
     if(cartToggleBtn) cartToggleBtn.addEventListener('click', toggleCartModal);
     if(cartToggleBtnMobileHeader) cartToggleBtnMobileHeader.addEventListener('click', toggleCartModal);
     if(closeCartBtn) closeCartBtn.addEventListener('click', toggleCartModal);
@@ -263,38 +291,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
             if (!response.ok) {
-                if (response.status === 401) clearUserSession(); // Token inválido
+                if (response.status === 401) clearUserSession(); 
                 throw new Error('Error al cargar el carrito');
             }
-            const cartData = await response.json();
-            // El backend devuelve { items: [], subtotal: X, id_carrito: Y }
-            // Mapeamos los items del backend a la estructura que usa el frontend si es necesario.
-            // La estructura del backend es: ic.cantidad, ic.precio_unitario_al_agregar, pv.id_variante, pv.sku_variante, p.nombre_producto etc.
-            // La estructura del frontend (cart.push({ ...product, quantity: 1 })) es más simple.
-            // Necesitamos adaptar.
-            cart = cartData.items.map(item => ({
-                id: item.id_variante, // Usamos id_variante como 'id' único del item en el carrito frontend
-                cart_item_id: item.id_item_carrito, // ID del item en la tabla ItemsCarrito
-                name: item.nombre_producto,
-                price: parseFloat(item.precio_unitario_al_agregar), // Precio al momento de agregar
-                quantity: item.cantidad,
-                image: item.imagen_variante_url || product.imagen_principal_url || 'https://placehold.co/80x80/E2E8F0/A0AEC0?text=Joya', // Mejorar esto
-                sku: item.sku_variante,
-                attributes: item.atributos_variante ? (typeof item.atributos_variante === 'string' ? JSON.parse(item.atributos_variante) : item.atributos_variante) : {}
-            }));
+            else{
+                const cartData = await response.json();
+                cart = cartData.items.map(item => ({
+                    id: item.id_producto, // USA ID_PRODUCTO
+                    cart_item_id: item.id_item_carrito, 
+                    name: item.nombre_producto,
+                    price: parseFloat(item.precio_unitario_al_agregar), 
+                    quantity: item.cantidad,
+                    image: item.imagen_principal_url || 'https://placehold.co/80x80/E2E8F0/A0AEC0?text=Joya', 
+                    sku: item.sku,
+                }));
+            }
             renderCartItems();
         } catch (error) {
             console.error("Error en fetchCart:", error);
             showToast('No se pudo cargar tu carrito.', 'error');
-            cart = []; // Resetear carrito local en caso de error grave
+            cart = []; 
             renderCartItems();
         }
     }
 
     function renderCartItems() {
+        if (!cartItemsContainer || !cartEmptyMessage || !cartTotalsDiv || !cartSubtotalDisplay) return;
         cartItemsContainer.innerHTML = '';
         let subtotal = 0;
-
         if (cart.length === 0) {
             cartEmptyMessage.classList.remove('hidden');
             cartTotalsDiv.classList.add('hidden');
@@ -304,21 +328,16 @@ document.addEventListener('DOMContentLoaded', () => {
             cart.forEach(item => {
                 const itemElement = document.createElement('div');
                 itemElement.className = 'flex items-center border-b pb-4';
-                let attributesString = '';
-                if (item.attributes && typeof item.attributes === 'object' && Object.keys(item.attributes).length > 0) {
-                    attributesString = Object.entries(item.attributes).map(([key, value]) => `${key}: ${value}`).join(', ');
-                }
-
+                const imageUrl = item.image || 'https://placehold.co/80x80/E2E8F0/A0AEC0?text=Joyeria';
                 itemElement.innerHTML = `
-                    <img src="${item.image || 'https://placehold.co/80x80/E2E8F0/A0AEC0?text=Joyeria'}" alt="[Imagen de ${item.name}]" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-md mr-3 md:mr-4" onerror="this.onerror=null;this.src='https://placehold.co/80x80/E2E8F0/A0AEC0?text=Error+Imagen';">
+                    <img src="${imageUrl}" alt="${item.name}" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-md mr-3 md:mr-4" onerror="this.onerror=null;this.src='https://placehold.co/80x80/E2E8F0/A0AEC0?text=Error+Imagen';">
                     <div class="flex-grow">
                         <h3 class="font-semibold text-sm md:text-base">${item.name}</h3>
-                        ${attributesString ? `<p class="text-xs md:text-sm text-gray-500">${attributesString}</p>` : ''}
                         <p class="text-blue-600 font-bold text-sm md:text-base">$${item.price.toFixed(2)}</p>
                     </div>
                     <div class="ml-auto flex flex-col md:flex-row items-end md:items-center">
-                        <input type="number" value="${item.quantity}" min="1" class="w-12 text-center border rounded-md p-1 mb-1 md:mb-0 md:mr-2 cart-item-quantity" data-item-id="${item.cart_item_id || item.id}" data-variant-id="${item.id}">
-                        <button class="text-red-500 hover:text-red-700 remove-cart-item" data-item-id="${item.cart_item_id || item.id}" data-variant-id="${item.id}"><i class="fas fa-trash"></i></button>
+                        <input type="number" value="${item.quantity}" min="1" class="w-12 text-center border rounded-md p-1 mb-1 md:mb-0 md:mr-2 cart-item-quantity" data-item-id="${item.cart_item_id}" data-product-id="${item.id}">
+                        <button class="text-red-500 hover:text-red-700 remove-cart-item" data-item-id="${item.cart_item_id}" data-product-id="${item.id}"><i class="fas fa-trash"></i></button>
                     </div>
                 `;
                 cartItemsContainer.appendChild(itemElement);
@@ -333,37 +352,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     async function handleAddToCartClick(event) {
-        if (!isLoggedIn()) {
-            showToast('Debes iniciar sesión para añadir productos al carrito.', 'info');
-            toggleAuthModal();
+        if (!isLoggedIn()) { /* ... (como antes) ... */ return; }
+        const productId = event.target.dataset.productId; // Ahora es directo id_producto
+        const productName = event.target.closest('.category-product-card').querySelector('h3').textContent; // Para el toast
+        if (!productId) {
+            showToast('ID de producto no encontrado.', 'error');
             return;
         }
-        
-        const productSlug = event.target.dataset.productSlug;
-        // Idealmente, aquí abriríamos un modal para seleccionar la variante del producto.
-        // Por ahora, vamos a simular que obtenemos la primera variante disponible del producto.
-        try {
-            showToast('Obteniendo detalles del producto...', 'info');
-            const response = await fetch(`${API_BASE_URL}/products/${productSlug}`);
-            if (!response.ok) throw new Error('Producto no encontrado o no disponible.');
-            const productDetails = await response.json();
-
-            if (!productDetails.variantes || productDetails.variantes.length === 0) {
-                showToast('Este producto no tiene variantes disponibles en este momento.', 'error');
-                return;
-            }
-            // Seleccionamos la primera variante como ejemplo
-            const variantToAdd = productDetails.variantes[0]; 
-            
-            await addItemToBackendCart(variantToAdd.id_variante, 1);
-
-        } catch (error) {
-            console.error("Error al obtener detalles del producto para añadir al carrito:", error);
-            showToast(error.message || 'Error al añadir el producto.', 'error');
-        }
+        await addItemToBackendCart(productId, 1, productName);
     }
     
-    async function addItemToBackendCart(variantId, quantity) {
+    async function addItemToBackendCart(productId, quantity, productName) {
         if (!isLoggedIn()) {
              showToast('Debes iniciar sesión para añadir productos.', 'info');
              toggleAuthModal();
@@ -372,32 +371,22 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_BASE_URL}/cart/items`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${getToken()}`
-                },
-                body: JSON.stringify({ id_variante: variantId, cantidad: quantity })
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
+                body: JSON.stringify({ id_producto: productId, cantidad: quantity }) // CAMBIO: id_producto
             });
             const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.message || 'Error al añadir item al carrito');
-            }
-            showToast(result.message || 'Item añadido al carrito.', 'success');
-            await fetchCart(); // Recargar carrito desde el backend
-        } catch (error) {
-            console.error("Error en addItemToBackendCart:", error);
-            showToast(error.message, 'error');
-        }
+            if (!response.ok) throw new Error(result.message || 'Error al añadir item');
+            showToast(`${productName || 'Item'} añadido al carrito.`, 'success');
+            await fetchCart();
+        } catch (error) { showToast(error.message, 'error'); }
     }
-
 
     async function handleQuantityChange(event) {
         if (!isLoggedIn()) {
-            // Lógica para carrito de invitado si se implementa
             showToast('Inicia sesión para modificar tu carrito.', 'info');
             return;
         }
-        const itemId = event.target.dataset.itemId; // Este es id_item_carrito
+        const itemId = event.target.dataset.itemId; 
         const newQuantity = parseInt(event.target.value);
 
         if (newQuantity < 1) {
@@ -423,17 +412,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error en handleQuantityChange:", error);
             showToast(error.message, 'error');
-            await fetchCart(); // Re-fetch para asegurar consistencia incluso en error
+            await fetchCart();
         }
     }
 
     async function handleRemoveItem(event) {
         if (!isLoggedIn()) {
-            // Lógica para carrito de invitado
             showToast('Inicia sesión para modificar tu carrito.', 'info');
             return;
         }
-        const itemId = event.currentTarget.dataset.itemId; // Este es id_item_carrito
+        const itemId = event.currentTarget.dataset.itemId; 
          try {
             const response = await fetch(`${API_BASE_URL}/cart/items/${itemId}`, {
                 method: 'DELETE',
@@ -457,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Checkout ---
-    if(goToCheckoutBtn) goToCheckoutBtn.addEventListener('click', () => {
+    if(goToCheckoutBtn) goToCheckoutBtn.addEventListener('click', async () => {
         if (!isLoggedIn()) {
             showToast('Debes iniciar sesión para proceder al pago.', 'info');
             toggleAuthModal();
@@ -467,20 +455,38 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Tu carrito está vacío. Añade productos antes de pagar.', 'info');
             return;
         }
-        loadCheckoutPage();
-        toggleCartModal(); // Cerrar modal del carrito
-        showView('checkout');
+        try {
+            const addressResponse = await fetch(`${API_BASE_URL}/users/me/default-address`, { 
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            if (!addressResponse.ok) {
+                const errorData = await addressResponse.json().catch(() => ({}));
+                showToast(errorData.message || 'No tienes una dirección predeterminada. Por favor, añádela en tu perfil.', 'info');
+                
+                if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">No se encontró dirección predeterminada. Por favor, configura una en tu perfil.</p>`;
+                return; 
+            }
+            const address = await addressResponse.json();
+            loadCheckoutPage(address); 
+            toggleCartModalEl(); 
+            showView('checkout');
+
+        } catch (error) {
+            console.error("Error al obtener dirección para checkout:", error);
+            showToast('Error al cargar información de envío.', 'error');
+        }
     });
 
     if(backToCartBtn) backToCartBtn.addEventListener('click', () => {
-        showView('main'); // O la vista anterior, ej. 'category' si estaba allí
-        toggleCartModal(); // Abrir modal del carrito
+        showView('main'); 
+        toggleCartModal(); 
     });
     
-    function loadCheckoutPage() {
+    function loadCheckoutPage(addressData) {
+        if (!checkoutOrderSummaryEl || !checkoutSubtotalEl || !checkoutShippingEl || !checkoutTotalEl || !checkoutAddressInfo) return;
         checkoutOrderSummaryEl.innerHTML = '';
         let subtotal = 0;
-        const shippingCost = 10.00; // Podría venir de configuración o API
+        const shippingCost = addressData ? parseFloat(addressData.costo_envio_zona) : 10.00; 
 
         cart.forEach(item => {
             const itemEl = document.createElement('div');
@@ -496,7 +502,20 @@ document.addEventListener('DOMContentLoaded', () => {
         checkoutSubtotalEl.textContent = `$${subtotal.toFixed(2)}`;
         checkoutShippingEl.textContent = `$${shippingCost.toFixed(2)}`;
         checkoutTotalEl.textContent = `$${(subtotal + shippingCost).toFixed(2)}`;
-
+        if (addressData) {
+            checkoutAddressInfo.innerHTML = `
+                <h4 class="font-semibold mb-1">Enviar a:</h4>
+                <p>${addressData.nombre_destinatario || currentUser.usuario.nombre_completo}</p>
+                <p>${addressData.calle_avenida}, Nro. ${addressData.numero_vivienda}</p>
+                <p>Zona: ${addressData.nombre_zona}</p>
+                ${addressData.referencia_adicional ? `<p>Ref: ${addressData.referencia_adicional}</p>` : ''}
+                <p>Teléfono: ${currentUser.usuario.telefono || 'No provisto'}</p>
+                `;
+            
+        } else {
+            checkoutAddressInfo.innerHTML = `<p class="text-red-500">No se pudo cargar la dirección de envío.</p>`;
+        }
+        if(shippingForm) shippingForm.classList.add('hidden');
         // Pre-llenar email si el usuario está logueado
         if (isLoggedIn() && currentUser.usuario.email) {
             const emailInput = document.getElementById('emailCheckout');
@@ -508,24 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if(shippingForm) shippingForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Prevenir envío tradicional, manejaremos con confirmPurchaseBtn
-    });
-
     if(confirmPurchaseBtn) confirmPurchaseBtn.addEventListener('click', async () => {
-        if (!shippingForm.checkValidity()) {
-            showToast('Por favor, completa todos los campos de envío requeridos.', 'error');
-            shippingForm.reportValidity();
-            return;
-        }
-
-        const shippingData = {
-            nombre_cliente_envio: document.getElementById('fullName').value,
-            direccion_envio_completa: document.getElementById('address').value,
-            email_contacto_envio: document.getElementById('emailCheckout').value,
-            // costo_envio se podría enviar si es variable, o el backend lo calcula/fija
-        };
-
         try {
             showToast('Procesando tu pedido...', 'info');
             const response = await fetch(`${API_BASE_URL}/orders/create`, {
@@ -534,21 +536,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${getToken()}`
                 },
-                body: JSON.stringify(shippingData)
             });
             const orderResult = await response.json();
-
-            if (!response.ok) {
-                throw new Error(orderResult.message || 'Error al crear el pedido');
-            }
-            
-            currentOrderDetails = orderResult; // Guardar detalles del pedido creado
-            // { message, id_pedido, codigo_pedido, total_pedido, estado_pedido, paymentInfo: { qrDataString, qrImageUrl, instructions } }
-            
-            showToast(orderResult.message || 'Pedido creado, pendiente de pago.', 'success');
+            if (!response.ok) throw new Error(orderResult.message || 'Error al crear pedido');
+            currentOrderDetails = orderResult; 
+            showToast(orderResult.message || 'Pedido creado.', 'success');
             displayOrderConfirmation(orderResult);
-            await fetchCart(); // El carrito debería estar vacío ahora en el backend
-
+            await fetchCart(); 
         } catch (error) {
             console.error("Error al confirmar la compra:", error);
             showToast(error.message, 'error');
@@ -608,7 +602,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(backToHomeFromConfirmationBtn) backToHomeFromConfirmationBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        currentOrderDetails = null; // Limpiar detalles del pedido actual
+        currentOrderDetails = null; 
         showView('main');
     });
 
@@ -665,27 +659,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(registerForm) registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const nombre_completo = registerForm.nombre_completo.value; // Cambiado de 'name' y 'apellido' a 'nombre_completo'
-        const email = registerForm.email.value;
-        const password = registerForm.password.value;
+        const formData = {
+            nombre_completo: registerForm.nombre_completo.value,
+            email: registerForm.email.value,
+            password: registerForm.password.value,
+            telefono: registerForm.telefono.value,
+            id_zona: registerForm.id_zona.value, 
+            calle_avenida: registerForm.calle_avenida.value,
+            numero_vivienda: registerForm.numero_vivienda.value, 
+            referencia_adicional: registerForm.referencia_adicional.value 
+        };
         const confirmPassword = registerForm.confirmPassword.value;
-        const telefono = registerForm.telefono.value; // Añadido campo teléfono
-
         if (password !== confirmPassword) {
             showToast('Las contraseñas no coinciden.', 'error');
             return;
         }
+        if (!formData.id_zona) { showToast('Por favor, selecciona una zona de entrega.', 'error'); return; }
         try {
             const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre_completo, email, password, telefono })
+                body: JSON.stringify(formData)
             });
             const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.message || 'Error al registrar usuario');
-            }
-            saveUserSession(data); // data = { message, token, usuario: { ... } }
+            if (!response.ok) throw new Error(data.message || 'Error al registrar');
+            saveUserSession(data); 
             showToast('Registro exitoso. ¡Bienvenido!', 'success');
             toggleAuthModal();
         } catch (error) {
@@ -698,9 +696,147 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         clearUserSession();
         showToast('Has cerrado sesión.', 'info');
-        showView('main'); // Regresar a la página principal
+        showView('main'); 
+    });
+    //const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+    //if(logoutBtnMobile) logoutBtnMobile.addEventListener('click', (e) => { /* ... */ });
+    // --- Perfil de Usuario y Pedidos ---
+    if (profileLink) profileLink.addEventListener('click', (e) => { e.preventDefault(); if(isLoggedIn()) loadUserProfile(); });
+    const profileLinkMobile = document.getElementById('profileLinkMobile');
+    if (profileLinkMobile) profileLinkMobile.addEventListener('click', (e) => { e.preventDefault(); if(isLoggedIn()) { loadUserProfile(); if(mobileMenu) mobileMenu.classList.add('hidden'); } });
+
+    async function loadUserProfile() {
+        if (!userProfilePage || !orderHistoryContainer) return;
+        showView('profile');
+        orderHistoryContainer.innerHTML = '<p>Cargando historial de pedidos...</p>';
+        try {
+            const response = await fetch(`${API_BASE_URL}/orders`, {
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            if (!response.ok) throw new Error('Error al cargar historial de pedidos');
+            const orders = await response.json();
+            renderOrderHistory(orders);
+        } catch (error) {
+            console.error("Error cargando perfil:", error);
+            orderHistoryContainer.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+        }
+    }
+    function renderOrderHistory(orders) {
+        if (!orderHistoryContainer) return;
+        if (orders.length === 0) {
+            orderHistoryContainer.innerHTML = '<p>No tienes pedidos aún.</p>';
+            return;
+        }
+        orderHistoryContainer.innerHTML = `
+            <h3 class="text-xl font-semibold mb-4 text-gray-700">Mis Pedidos</h3>
+            <div class="space-y-4">
+                ${orders.map(order => `
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-semibold text-blue-600">Pedido #${order.codigo_pedido}</span>
+                            <span class="text-sm text-gray-500">${new Date(order.fecha_pedido).toLocaleDateString()}</span>
+                        </div>
+                        <p class="text-sm">Estado: <span class="font-medium ${getOrderStatusColor(order.estado_pedido)}">${formatOrderStatus(order.estado_pedido)}</span></p>
+                        <p class="text-sm">Total: <span class="font-medium">$${parseFloat(order.total_pedido).toFixed(2)}</span></p>
+                        <div class="mt-2 flex space-x-2">
+                            <button class="view-order-details-btn text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded" data-order-id="${order.id_pedido}">Ver Detalles</button>
+                            ${order.estado_pedido === 'entregado' && !order.tiene_queja ? 
+                                `<button class="register-complaint-btn text-xs bg-red-100 hover:bg-red-200 text-red-700 px-2 py-1 rounded" data-order-id="${order.id_pedido}" data-order-code="${order.codigo_pedido}">Registrar Queja</button>` : ''}
+                            ${order.tiene_queja ? 
+                                `<button class="view-complaint-btn text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-2 py-1 rounded" data-order-id="${order.id_pedido}">Ver Queja</button>` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        // Event Listeners para botones de pedidos
+        document.querySelectorAll('.register-complaint-btn').forEach(btn => btn.addEventListener('click', openComplaintModal));
+        document.querySelectorAll('.view-complaint-btn').forEach(btn => btn.addEventListener('click', openViewComplaintModal));
+        document.querySelectorAll('.view-order-details-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            const orderId = e.target.dataset.orderId;
+            showToast(`Cargando detalles del pedido ${orderId}...`, 'info');
+        }));
+    }
+    function getOrderStatusColor(status) {
+        const colors = {
+            'pendiente_pago': 'text-yellow-600', 'pagado': 'text-green-600', 'en_proceso': 'text-blue-600',
+            'enviado': 'text-purple-600', 'entregado': 'text-teal-600', 'cancelado': 'text-red-600', 'fallido': 'text-red-700'
+        };
+        return colors[status] || 'text-gray-600';
+    }
+    function formatOrderStatus(status) {
+        return (status || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    // --- Sistema de Quejas (Cliente) ---
+    function openComplaintModal(event) {
+        const orderId = event.target.dataset.orderId;
+        const orderCode = event.target.dataset.orderCode;
+        if (complaintModal && complaintOrderIdHidden && complaintForm) {
+            complaintOrderIdHidden.value = orderId;
+            complaintForm.reset();
+            complaintModal.querySelector('h2').textContent = `Registrar Queja para Pedido #${orderCode}`;
+            complaintModal.classList.add('active');
+        }
+    }
+    if (closeComplaintModalBtn) closeComplaintModalBtn.addEventListener('click', () => complaintModal.classList.remove('active'));
+    if (complaintForm) complaintForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const orderId = complaintOrderIdHidden.value;
+        const descripcion_queja = complaintForm.descripcion_queja.value;
+        if (!descripcion_queja.trim()) {
+            showToast('Por favor, describe tu queja.', 'error'); return;
+        }
+        try {
+            complaintForm.querySelector('button[type="submit"]').disabled = true;
+            const response = await fetch(`${API_BASE_URL}/orders/${orderId}/complaint`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}`},
+                body: JSON.stringify({ descripcion_queja })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || 'Error al enviar queja');
+            showToast('Queja enviada exitosamente.', 'success');
+            complaintModal.classList.remove('active');
+            loadUserProfile(); // Recargar historial para mostrar queja
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            if (complaintForm.querySelector('button[type="submit"]')) complaintForm.querySelector('button[type="submit"]').disabled = false;
+        }
     });
 
+    async function openViewComplaintModal(event) {
+        const orderId = event.target.dataset.orderId;
+        if (!viewComplaintModal || !viewComplaintDetailsContainer) return;
+        viewComplaintDetailsContainer.innerHTML = '<p>Cargando queja...</p>';
+        viewComplaintModal.classList.add('active');
+        try {
+            const response = await fetch(`${API_BASE_URL}/orders/${orderId}/complaint`, {
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            if (!response.ok) throw new Error('Error al cargar la queja.');
+            const complaint = await response.json();
+            if (!complaint) {
+                viewComplaintDetailsContainer.innerHTML = '<p>No se encontró queja para este pedido.</p>'; return;
+            }
+            viewComplaintModal.querySelector('h2').textContent = `Detalle de Queja - Pedido #${complaint.codigo_pedido}`;
+            viewComplaintDetailsContainer.innerHTML = `
+                <p><strong>Fecha de Queja:</strong> ${new Date(complaint.fecha_queja).toLocaleString()}</p>
+                <p><strong>Estado:</strong> <span class="${getOrderStatusColor(complaint.estado_queja.replace(/_admin|_cliente/g, ''))}">${formatOrderStatus(complaint.estado_queja)}</span></p>
+                <p class="mt-2"><strong>Tu Queja:</strong></p>
+                <p class="bg-gray-100 p-2 rounded">${complaint.descripcion_queja}</p>
+                ${complaint.respuesta_admin ? `
+                    <p class="mt-3"><strong>Respuesta de DIAMANTECH (${new Date(complaint.fecha_respuesta_admin).toLocaleString()}):</strong></p>
+                    <p class="bg-blue-50 p-2 rounded">${complaint.respuesta_admin}</p>
+                ` : '<p class="mt-3 text-gray-500">Aún no hay respuesta del administrador.</p>'}
+            `;
+        } catch (error) {
+            viewComplaintDetailsContainer.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+        }
+    }
+    if (closeViewComplaintModalBtn) closeViewComplaintModalBtn.addEventListener('click', () => viewComplaintModal.classList.remove('active'));
+    
     // --- UI General y Navegación ---
     if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => {
         mobileMenu.classList.toggle('hidden');
@@ -753,8 +889,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // --- Inicialización ---
-    loadUserSession(); // Cargar sesión al iniciar
-    fetchCategories(); // Cargar categorías principales
-    showView('main'); // Mostrar vista principal por defecto
-    // renderCartItems(); // Se llama dentro de loadUserSession o fetchCart
+    loadUserSession(); 
+    fetchCategories(); 
+    // fetchDeliveryZones(); // Se llama al abrir el modal de registro
+    showView('main'); 
 });

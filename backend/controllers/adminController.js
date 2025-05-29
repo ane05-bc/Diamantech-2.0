@@ -1,6 +1,72 @@
 const dbPool = require('../config/db');
 
-// --- Gestión de Categorías ---
+// --- Gestión de Productos (Simplificado) ---
+const createProduct = async (req, res, next) => {
+  const { id_categoria, nombre_producto, slug_producto, descripcion_corta, descripcion_larga, precio, stock, sku, imagen_principal_url, galeria_imagenes_urls, materiales, peso_gramos, dimensiones, activo } = req.body;
+  if (!id_categoria || !nombre_producto || !slug_producto || precio === undefined || stock === undefined || !sku) {
+    return res.status(400).json({ message: 'Campos requeridos: id_categoria, nombre_producto, slug_producto, precio, stock, sku.' });
+  }
+  try {
+    const [result] = await dbPool.query(
+      'INSERT INTO Productos (id_categoria, nombre_producto, slug_producto, descripcion_corta, descripcion_larga, precio, stock, sku, imagen_principal_url, galeria_imagenes_urls, materiales, peso_gramos, dimensiones, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id_categoria, nombre_producto, slug_producto, descripcion_corta || null, descripcion_larga || null, precio, stock, sku, imagen_principal_url || null, galeria_imagenes_urls ? JSON.stringify(galeria_imagenes_urls) : null, materiales || null, peso_gramos || null, dimensiones || null, activo !== undefined ? activo : true]
+    );
+    res.status(201).json({ id_producto: result.insertId, nombre_producto, sku });
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY' && (error.sqlMessage.includes('slug_producto_unique') || error.sqlMessage.includes('sku_unique'))) {
+        return res.status(400).json({ message: 'El SKU o slug del producto ya existe.' });
+    }
+    if (error.code === 'ER_NO_REFERENCED_ROW_2' && error.sqlMessage.includes('id_categoria')) {
+        return res.status(400).json({ message: 'La categoría especificada no existe.' });
+    }
+    next(error);
+  }
+};
+
+const updateProduct = async (req, res, next) => {
+    const { productId } = req.params;
+    const { id_categoria, nombre_producto, slug_producto, descripcion_corta, descripcion_larga, precio, stock, sku, imagen_principal_url, galeria_imagenes_urls, materiales, peso_gramos, dimensiones, activo } = req.body;
+
+    if (!id_categoria || !nombre_producto || !slug_producto || precio === undefined || stock === undefined || !sku) {
+        return res.status(400).json({ message: 'Campos requeridos: id_categoria, nombre_producto, slug_producto, precio, stock, sku.' });
+    }
+    try {
+        const [result] = await dbPool.query(
+            `UPDATE Productos SET 
+                id_categoria = ?, nombre_producto = ?, slug_producto = ?, descripcion_corta = ?, 
+                descripcion_larga = ?, precio = ?, stock = ?, sku = ?, imagen_principal_url = ?, 
+                galeria_imagenes_urls = ?, materiales = ?, peso_gramos = ?, dimensiones = ?, activo = ?
+            WHERE id_producto = ?`,
+            [
+                id_categoria, nombre_producto, slug_producto, descripcion_corta || null, 
+                descripcion_larga || null, precio, stock, sku, imagen_principal_url || null,
+                galeria_imagenes_urls ? JSON.stringify(galeria_imagenes_urls) : null, 
+                materiales || null, peso_gramos || null, dimensiones || null, activo,
+                productId
+            ]
+        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Producto no encontrado.' });
+        }
+        // Alerta de Stock Mínimo
+        if (stock <= 5 && stock > 0) {
+            console.warn(`ALERTA DE STOCK BAJO (Admin): Producto SKU ${sku} (ID: ${productId}) actualizado a stock ${stock}.`);
+        } else if (stock === 0) {
+             console.info(`INFO STOCK (Admin): Producto SKU ${sku} (ID: ${productId}) ahora tiene stock 0.`);
+        }
+        res.status(200).json({ message: 'Producto actualizado exitosamente.' });
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY' && (error.sqlMessage.includes('slug_producto_unique') || error.sqlMessage.includes('sku_unique'))) {
+            return res.status(400).json({ message: 'El nuevo SKU o slug del producto ya existe.' });
+        }
+         if (error.code === 'ER_NO_REFERENCED_ROW_2' && error.sqlMessage.includes('id_categoria')) {
+            return res.status(400).json({ message: 'La categoría especificada no existe.' });
+        }
+        next(error);
+    }
+};
+
+// (Mantener createCategory y updateCategory como estaban, pero asegurando que manejen 'activo')
 const createCategory = async (req, res, next) => {
   const { nombre_categoria, descripcion_categoria, imagen_url_categoria, slug_categoria, activo } = req.body;
   if (!nombre_categoria || !slug_categoria) {
@@ -29,7 +95,7 @@ const updateCategory = async (req, res, next) => {
   try {
     const [result] = await dbPool.query(
       'UPDATE Categorias SET nombre_categoria = ?, descripcion_categoria = ?, imagen_url_categoria = ?, slug_categoria = ?, activo = ? WHERE id_categoria = ?',
-      [nombre_categoria, descripcion_categoria || null, imagen_url_categoria || null, slug_categoria, activo, categoryId]
+      [nombre_categoria, descripcion_categoria || null, imagen_url_categoria || null, slug_categoria, activo !== undefined ? activo : true, categoryId]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Categoría no encontrada.' });
@@ -43,138 +109,153 @@ const updateCategory = async (req, res, next) => {
   }
 };
 
-// --- Gestión de Productos ---
-const createProduct = async (req, res, next) => {
-  const { id_categoria, nombre_producto, slug_producto, descripcion_corta, descripcion_larga, precio_base, sku_base, imagen_principal_url, galeria_imagenes_urls, materiales, peso_gramos, dimensiones, activo } = req.body;
-  if (!id_categoria || !nombre_producto || !slug_producto || !precio_base || !sku_base) {
-    return res.status(400).json({ message: 'Campos requeridos: id_categoria, nombre_producto, slug_producto, precio_base, sku_base.' });
-  }
-  try {
-    const [result] = await dbPool.query(
-      'INSERT INTO Productos (id_categoria, nombre_producto, slug_producto, descripcion_corta, descripcion_larga, precio_base, sku_base, imagen_principal_url, galeria_imagenes_urls, materiales, peso_gramos, dimensiones, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id_categoria, nombre_producto, slug_producto, descripcion_corta || null, descripcion_larga || null, precio_base, sku_base, imagen_principal_url || null, galeria_imagenes_urls ? JSON.stringify(galeria_imagenes_urls) : null, materiales || null, peso_gramos || null, dimensiones || null, activo !== undefined ? activo : true]
-    );
-    res.status(201).json({ id_producto: result.insertId, nombre_producto, sku_base });
-  } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({ message: 'El SKU base o slug del producto ya existe.' });
-    }
-     if (error.code === 'ER_NO_REFERENCED_ROW_2' && error.sqlMessage.includes('id_categoria')) {
-        return res.status(400).json({ message: 'La categoría especificada no existe.' });
-    }
-    next(error);
-  }
-};
 
-const updateProduct = async (req, res, next) => {
-    const { productId } = req.params;
-    const { id_categoria, nombre_producto, slug_producto, descripcion_corta, descripcion_larga, precio_base, sku_base, imagen_principal_url, galeria_imagenes_urls, materiales, peso_gramos, dimensiones, activo } = req.body;
+//  Gestión de Pedidos (Admin)
+const getAllOrdersAdmin = async (req, res, next) => {
+    const { estado, fecha_inicio, fecha_fin, cliente_email } = req.query;
+    let query = `
+        SELECT p.id_pedido, p.codigo_pedido, p.fecha_pedido, p.estado_pedido, p.total_pedido, 
+               u.nombre_completo AS cliente_nombre, u.email AS cliente_email
+        FROM Pedidos p
+        JOIN Usuarios u ON p.id_usuario = u.id_usuario
+    `;
+    const conditions = [];
+    const params = [];
 
-    if (!id_categoria || !nombre_producto || !slug_producto || !precio_base || !sku_base) {
-        return res.status(400).json({ message: 'Campos requeridos: id_categoria, nombre_producto, slug_producto, precio_base, sku_base.' });
+    if (estado) {
+        conditions.push("p.estado_pedido = ?");
+        params.push(estado);
     }
+    if (fecha_inicio) {
+        conditions.push("DATE(p.fecha_pedido) >= ?");
+        params.push(fecha_inicio);
+    }
+    if (fecha_fin) {
+        conditions.push("DATE(p.fecha_pedido) <= ?");
+        params.push(fecha_fin);
+    }
+    if (cliente_email) {
+        conditions.push("u.email LIKE ?");
+        params.push(`%${cliente_email}%`);
+    }
+
+    if (conditions.length > 0) {
+        query += " WHERE " + conditions.join(" AND ");
+    }
+    query += " ORDER BY p.fecha_pedido DESC";
+
     try {
-        const [result] = await dbPool.query(
-            `UPDATE Productos SET 
-                id_categoria = ?, nombre_producto = ?, slug_producto = ?, descripcion_corta = ?, 
-                descripcion_larga = ?, precio_base = ?, sku_base = ?, imagen_principal_url = ?, 
-                galeria_imagenes_urls = ?, materiales = ?, peso_gramos = ?, dimensiones = ?, activo = ?
-            WHERE id_producto = ?`,
-            [
-                id_categoria, nombre_producto, slug_producto, descripcion_corta || null, 
-                descripcion_larga || null, precio_base, sku_base, imagen_principal_url || null,
-                galeria_imagenes_urls ? JSON.stringify(galeria_imagenes_urls) : null, 
-                materiales || null, peso_gramos || null, dimensiones || null, activo,
-                productId
-            ]
-        );
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Producto no encontrado.' });
-        }
-        res.status(200).json({ message: 'Producto actualizado exitosamente.' });
+        const [orders] = await dbPool.query(query, params);
+        res.status(200).json(orders);
     } catch (error) {
-        if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ message: 'El nuevo SKU base o slug del producto ya existe.' });
-        }
-        if (error.code === 'ER_NO_REFERENCED_ROW_2' && error.sqlMessage.includes('id_categoria')) {
-            return res.status(400).json({ message: 'La categoría especificada no existe.' });
-        }
         next(error);
     }
 };
 
-
-// --- Gestión de Variantes de Producto (incluye stock) ---
-const createProductVariant = async (req, res, next) => {
-  const { id_producto, sku_variante, atributos_variante, precio_adicional, stock, imagen_variante_url } = req.body;
-  if (!id_producto || !sku_variante || !atributos_variante) {
-    return res.status(400).json({ message: 'Campos requeridos: id_producto, sku_variante, atributos_variante.' });
-  }
-  const stockValue = stock !== undefined ? stock : 0;
-  try {
-    const [result] = await dbPool.query(
-      'INSERT INTO VariantesProducto (id_producto, sku_variante, atributos_variante, precio_adicional, stock, imagen_variante_url) VALUES (?, ?, ?, ?, ?, ?)',
-      [id_producto, sku_variante, JSON.stringify(atributos_variante), precio_adicional || 0, stockValue, imagen_variante_url || null]
-    );
-     if (stockValue <= 5 && stockValue > 0) {
-        console.warn(`ALERTA DE STOCK BAJO: Variante SKU ${sku_variante} (ID: ${result.insertId}) creada con stock ${stockValue}.`);
-        // Aquí se podría añadir lógica para notificar al admin
+const updateOrderStatusAdmin = async (req, res, next) => {
+    const { orderId } = req.params;
+    const { nuevo_estado } = req.body;
+    // Validar que nuevo_estado sea uno de los ENUM permitidos
+    const validStates = ['pendiente_pago','pagado','en_proceso','enviado','entregado','cancelado','fallido'];
+    if (!nuevo_estado || !validStates.includes(nuevo_estado)) {
+        return res.status(400).json({ message: 'Estado de pedido no válido.' });
     }
-    res.status(201).json({ id_variante: result.insertId, sku_variante });
-  } catch (error) {
-     if (error.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({ message: 'El SKU de la variante ya existe.' });
+    try {
+        const [result] = await dbPool.query(
+            "UPDATE Pedidos SET estado_pedido = ? WHERE id_pedido = ?",
+            [nuevo_estado, orderId]
+        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Pedido no encontrado.' });
+        }
+        // Aquí podrías añadir lógica para notificar al cliente sobre el cambio de estado
+        res.status(200).json({ message: `Estado del pedido ${orderId} actualizado a ${nuevo_estado}.`});
+    } catch (error) {
+        next(error);
     }
-    if (error.code === 'ER_NO_REFERENCED_ROW_2' && error.sqlMessage.includes('id_producto')) {
-        return res.status(400).json({ message: 'El producto base especificado no existe.' });
-    }
-    next(error);
-  }
 };
 
-const updateProductVariant = async (req, res, next) => {
-  const { variantId } = req.params;
-  const { sku_variante, atributos_variante, precio_adicional, stock, imagen_variante_url } = req.body;
-   if (!sku_variante || atributos_variante === undefined) { // Stock y precio pueden ser 0, atributos_variante puede ser {}
-    return res.status(400).json({ message: 'Campos requeridos: sku_variante, atributos_variante.' });
-  }
-  const stockValue = stock !== undefined ? stock : 0; // Asegurar que stock tenga un valor
-  try {
-    // Obtener stock actual para comparar si es necesario (no implementado aquí para simplificar)
-    const [result] = await dbPool.query(
-      'UPDATE VariantesProducto SET sku_variante = ?, atributos_variante = ?, precio_adicional = ?, stock = ?, imagen_variante_url = ? WHERE id_variante = ?',
-      [sku_variante, JSON.stringify(atributos_variante), precio_adicional !== undefined ? precio_adicional : 0, stockValue, imagen_variante_url || null, variantId]
-    );
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Variante no encontrada.' });
+// --- Gestión de Quejas (Admin) ---
+const getAllComplaintsAdmin = async (req, res, next) => {
+    const { estado } = req.query;
+    let query = `
+        SELECT q.id_queja, q.id_pedido, q.fecha_queja, q.estado_queja, 
+               p.codigo_pedido, u.nombre_completo AS cliente_nombre, u.email AS cliente_email,
+               SUBSTRING(q.descripcion_queja, 1, 100) AS descripcion_corta 
+        FROM QuejasPedido q
+        JOIN Pedidos p ON q.id_pedido = p.id_pedido
+        JOIN Usuarios u ON q.id_usuario = u.id_usuario
+    `;
+    const params = [];
+    if (estado) {
+        query += " WHERE q.estado_queja = ?";
+        params.push(estado);
     }
-
-    // Alerta de Stock Mínimo
-    if (stockValue <= 5 && stockValue > 0) {
-        console.warn(`ALERTA DE STOCK BAJO: Variante SKU ${sku_variante} (ID: ${variantId}) actualizada a stock ${stockValue}.`);
-        // Aquí se podría añadir lógica para notificar al admin (e.g., guardar en tabla NotificacionesAdmin)
-    } else if (stockValue === 0) {
-         console.info(`INFO STOCK: Variante SKU ${sku_variante} (ID: ${variantId}) ahora tiene stock 0.`);
+    query += " ORDER BY q.fecha_queja DESC";
+    try {
+        const [complaints] = await dbPool.query(query, params);
+        res.status(200).json(complaints);
+    } catch (error) {
+        next(error);
     }
-
-
-    res.status(200).json({ message: 'Variante actualizada exitosamente (stock incluido).' });
-  } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
-        return res.status(400).json({ message: 'El nuevo SKU de la variante ya existe.' });
-    }
-    next(error);
-  }
 };
 
-// TODO: Implementar deleteCategory, deleteProduct, deleteProductVariant con cuidado
-// TODO: Implementar funciones para que el admin vea pedidos, actualice estados de pedido, vea alertas de stock.
+const getComplaintDetailsAdmin = async (req, res, next) => {
+    const { complaintId } = req.params;
+    try {
+        const [complaintRows] = await dbPool.query(
+             `SELECT q.*, p.codigo_pedido, u.nombre_completo AS cliente_nombre, u.email AS cliente_email, u.telefono AS cliente_telefono
+              FROM QuejasPedido q
+              JOIN Pedidos p ON q.id_pedido = p.id_pedido
+              JOIN Usuarios u ON q.id_usuario = u.id_usuario
+              WHERE q.id_queja = ?`,
+            [complaintId]
+        );
+        if (complaintRows.length === 0) {
+            return res.status(404).json({ message: 'Queja no encontrada.' });
+        }
+        res.status(200).json(complaintRows[0]);
+    } catch (error) {
+        next(error);
+    }
+};
+
+const respondToComplaintAdmin = async (req, res, next) => {
+    const { complaintId } = req.params;
+    const { respuesta_admin, nuevo_estado_queja } = req.body;
+
+    if (!respuesta_admin || !nuevo_estado_queja) {
+        return res.status(400).json({ message: 'Respuesta y nuevo estado son requeridos.' });
+    }
+    const validStates = ['en_proceso_admin', 'resuelta_favorable_cliente', 'resuelta_desfavorable_cliente', 'cerrada_admin'];
+    if (!validStates.includes(nuevo_estado_queja)) {
+        return res.status(400).json({ message: 'Estado de queja no válido.' });
+    }
+
+    try {
+        const [result] = await dbPool.query(
+            'UPDATE QuejasPedido SET respuesta_admin = ?, estado_queja = ?, fecha_respuesta_admin = NOW() WHERE id_queja = ?',
+            [respuesta_admin, nuevo_estado_queja, complaintId]
+        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Queja no encontrada.' });
+        }
+        // Aquí podrías notificar al cliente sobre la respuesta a su queja
+        res.status(200).json({ message: 'Respuesta a la queja enviada y estado actualizado.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 module.exports = {
   createCategory,
   updateCategory,
   createProduct,
   updateProduct,
-  createProductVariant,
-  updateProductVariant,
+  getAllOrdersAdmin,
+  updateOrderStatusAdmin,
+  getAllComplaintsAdmin,
+  getComplaintDetailsAdmin,
+  respondToComplaintAdmin,
 };

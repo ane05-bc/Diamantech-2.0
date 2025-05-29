@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - DIAMANTECH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/admin_style.css"> </head>
+<body class="bg-gray-200 font-poppins">
+    <div id="adminLoginContainer" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
+            <h2 class="text-2xl font-bold text-center text-blue-700 mb-6">Admin Login</h2>
+            <form id="adminLoginForm">
+                <div class="mb-4">
+                    <label for="adminEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="adminEmail" name="email" class="w-full p-3 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-6">
+                    <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" id="adminPassword" name="password" class="w-full p-3 border border-gray-300 rounded-md" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-md hover:bg-blue-700">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="adminDashboardContainer" class="hidden">
+        <header class="bg-indigo-950 text-white p-4 shadow-md">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-xl font-bold">Panel de Administrador - DIAMANTECH</h1>
+                <div>
+                    <span id="adminUserGreeting" class="mr-4"></span>
+                    <button id="adminLogoutBtn" class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm">Cerrar Sesión</button>
+                </div>
+            </div>
+        </header>
+
+        <nav class="bg-white shadow-sm">
+            <div class="container mx-auto py-3 flex space-x-6">
+                <button data-section="products" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium">Productos</button>
+                <button data-section="orders" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium">Pedidos</button>
+                <button data-section="complaints" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium">Quejas</button>
+                <button data-section="categories" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium">Categorías</button>
+            </div>
+        </nav>
+
+        <main class="container mx-auto p-6">
+            <section id="adminProductsSection" class="admin-section hidden">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gestión de Productos</h2>
+                <button id="showAddProductModalBtn" class="mb-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Añadir Producto</button>
+                <div id="adminProductList" class="bg-white p-4 rounded shadow">Cargando productos...</div>
+            </section>
+
+            <section id="adminOrdersSection" class="admin-section hidden">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gestión de Pedidos</h2>
+                <div class="mb-4 flex space-x-2">
+                    <input type="text" id="orderFilterEmail" placeholder="Filtrar por email cliente..." class="p-2 border rounded w-1/3">
+                    <select id="orderFilterStatus" class="p-2 border rounded bg-white">
+                        <option value="">Todos los Estados</option>
+                        <option value="pendiente_pago">Pendiente Pago</option>
+                        <option value="pagado">Pagado</option>
+                        <option value="en_proceso">En Proceso</option>
+                        <option value="enviado">Enviado</option>
+                        <option value="entregado">Entregado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                    <button id="applyOrderFiltersBtn" class="bg-blue-500 text-white px-3 py-1 rounded">Filtrar</button>
+                </div>
+                <div id="adminOrderList" class="bg-white p-4 rounded shadow">Cargando pedidos...</div>
+            </section>
+
+            <section id="adminComplaintsSection" class="admin-section hidden">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gestión de Quejas</h2>
+                 <select id="complaintFilterStatus" class="p-2 border rounded bg-white mb-4">
+                        <option value="">Todos los Estados</option>
+                        <option value="pendiente_revision_admin">Pendiente Revisión</option>
+                        <option value="en_proceso_admin">En Proceso</option>
+                        <option value="resuelta_favorable_cliente">Resuelta (Favorable)</option>
+                        <option value="resuelta_desfavorable_cliente">Resuelta (Desfavorable)</option>
+                        <option value="cerrada_admin">Cerrada</option>
+                 </select>
+                 <button id="applyComplaintFiltersBtn" class="bg-blue-500 text-white px-3 py-1 rounded mb-4">Filtrar Quejas</button>
+                <div id="adminComplaintList" class="bg-white p-4 rounded shadow">Cargando quejas...</div>
+            </section>
+            
+            <section id="adminCategoriesSection" class="admin-section hidden">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gestión de Categorías</h2>
+                <button id="showAddCategoryModalBtn" class="mb-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Añadir Categoría</button>
+                <div id="adminCategoryList" class="bg-white p-4 rounded shadow">Cargando categorías...</div>
+            </section>
+
+        </main>
+    </div>
+
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden">
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-4 my-8 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="productModalTitle" class="text-xl font-bold text-blue-700">Añadir Producto</h2>
+                <button id="closeProductModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <form id="productForm" class="space-y-4">
+                <input type="hidden" id="editProductId" name="productId">
+                <div><label for="productName" class="block text-sm font-medium">Nombre</label><input type="text" id="productName" name="nombre_producto" class="mt-1 w-full p-2 border rounded" required></div>
+                <div><label for="productSlug" class="block text-sm font-medium">Slug</label><input type="text" id="productSlug" name="slug_producto" class="mt-1 w-full p-2 border rounded" required></div>
+                <div><label for="productCategory" class="block text-sm font-medium">Categoría</label><select id="productCategory" name="id_categoria" class="mt-1 w-full p-2 border rounded bg-white" required></select></div>
+                <div><label for="productPrice" class="block text-sm font-medium">Precio (Bs.)</label><input type="number" id="productPrice" name="precio" step="0.01" class="mt-1 w-full p-2 border rounded" required></div>
+                <div><label for="productStock" class="block text-sm font-medium">Stock</label><input type="number" id="productStock" name="stock" class="mt-1 w-full p-2 border rounded" required></div>
+                <div><label for="productSku" class="block text-sm font-medium">SKU</label><input type="text" id="productSku" name="sku" class="mt-1 w-full p-2 border rounded" required></div>
+                <div><label for="productDescCorta" class="block text-sm font-medium">Descripción Corta</label><textarea id="productDescCorta" name="descripcion_corta" rows="2" class="mt-1 w-full p-2 border rounded"></textarea></div>
+                <div><label for="productDescLarga" class="block text-sm font-medium">Descripción Larga</label><textarea id="productDescLarga" name="descripcion_larga" rows="4" class="mt-1 w-full p-2 border rounded"></textarea></div>
+                <div><label for="productImagePrincipal" class="block text-sm font-medium">URL Imagen Principal</label><input type="url" id="productImagePrincipal" name="imagen_principal_url" class="mt-1 w-full p-2 border rounded"></div>
+                <div><label for="productImageGaleria" class="block text-sm font-medium">URLs Galería (JSON Array, ej: ["url1", "url2"])</label><input type="text" id="productImageGaleria" name="galeria_imagenes_urls" class="mt-1 w-full p-2 border rounded"></div>
+                <div><label for="productMateriales" class="block text-sm font-medium">Materiales</label><input type="text" id="productMateriales" name="materiales" class="mt-1 w-full p-2 border rounded"></div>
+                <div class="flex items-center"><input type="checkbox" id="productActivo" name="activo" class="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" checked><label for="productActivo" class="text-sm font-medium">Activo</label></div>
+                <button type="submit" id="saveProductBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Guardar Producto</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="adminOrderDetailModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden">
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-3xl mx-4 my-8 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="orderModalTitle" class="text-xl font-bold text-blue-700">Detalles del Pedido</h2>
+                <button id="closeAdminOrderDetailModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div id="adminOrderDetailContent" class="text-sm">Cargando detalles...</div>
+            <div class="mt-4">
+                <label for="adminUpdateOrderStatus" class="block text-sm font-medium">Actualizar Estado:</label>
+                <select id="adminUpdateOrderStatusSelect" class="p-2 border rounded bg-white mr-2">
+                     <option value="pendiente_pago">Pendiente Pago</option>
+                     <option value="pagado">Pagado</option>
+                     <option value="en_proceso">En Proceso</option>
+                     <option value="enviado">Enviado</option>
+                     <option value="entregado">Entregado</option>
+                     <option value="cancelado">Cancelado</option>
+                </select>
+                <button id="submitUpdateOrderStatusBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm">Actualizar</button>
+            </div>
+             <button id="downloadOrderInfoBtn" class="mt-4 bg-gray-700 hover:bg-gray-800 text-white py-2 px-4 rounded text-sm w-full md:w-auto">
+                <i class="fas fa-download mr-2"></i>Descargar Info para Delivery
+            </button>
+        </div>
+    </div>
+
+    <div id="adminComplaintModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden">
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-4 my-8 overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="complaintModalTitleAdmin" class="text-xl font-bold text-blue-700">Gestionar Queja</h2>
+                <button id="closeAdminComplaintModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div id="adminComplaintDetailContent" class="mb-4 text-sm">Cargando queja...</div>
+            <form id="adminComplaintResponseForm">
+                <input type="hidden" id="adminEditComplaintId">
+                <div>
+                    <label for="adminComplaintResponseText" class="block text-sm font-medium">Respuesta del Administrador:</label>
+                    <textarea id="adminComplaintResponseText" name="respuesta_admin" rows="4" class="mt-1 w-full p-2 border rounded" required></textarea>
+                </div>
+                <div class="mt-2">
+                    <label for="adminComplaintNewStatus" class="block text-sm font-medium">Nuevo Estado de la Queja:</label>
+                    <select id="adminComplaintNewStatus" name="nuevo_estado_queja" class="mt-1 w-full p-2 border rounded bg-white" required>
+                        <option value="en_proceso_admin">En Proceso (Admin)</option>
+                        <option value="resuelta_favorable_cliente">Resuelta Favorable al Cliente</option>
+                        <option value="resuelta_desfavorable_cliente">Resuelta Desfavorable al Cliente</option>
+                        <option value="cerrada_admin">Cerrada por Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="mt-4 w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Enviar Respuesta y Actualizar Estado</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden">
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg mx-4 my-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="categoryModalTitle" class="text-xl font-bold text-blue-700">Añadir Categoría</h2>
+                <button id="closeCategoryModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <form id="categoryForm" class="space-y-4">
+                <input type="hidden" id="editCategoryId" name="categoryId">
+                <div><label for="categoryName" class="block text-sm font-medium">Nombre</label><input type="text" id="categoryName" name="nombre_categoria" class="mt-1 w-full p-2 border rounded" required></div>
+                <div><label for="categorySlug" class="block text-sm font-medium">Slug</label><input type="text" id="categorySlug" name="slug_categoria" class="mt-1 w-full p-2 border rounded" required></div>
+                <div><label for="categoryDescription" class="block text-sm font-medium">Descripción</label><textarea id="categoryDescription" name="descripcion_categoria" rows="3" class="mt-1 w-full p-2 border rounded"></textarea></div>
+                <div><label for="categoryImageUrl" class="block text-sm font-medium">URL Imagen</label><input type="url" id="categoryImageUrl" name="imagen_url_categoria" class="mt-1 w-full p-2 border rounded"></div>
+                <div class="flex items-center"><input type="checkbox" id="categoryActivo" name="activo" class="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" checked><label for="categoryActivo" class="text-sm font-medium">Activa</label></div>
+                <button type="submit" id="saveCategoryBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Guardar Categoría</button>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="js/admin_script.js"></script>
+</body>
+</html>
