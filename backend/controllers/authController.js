@@ -124,10 +124,35 @@ const getDeliveryZones = async (req, res, next) => {
         next(error);
     }
 };
-
+const getDefaultAddress = async (req, res, next) => {
+    const id_usuario = req.user.id_usuario; // Asumimos que el middleware 'protect' añade req.user
+    try {
+        const [addressRows] = await dbPool.query(
+            `SELECT 
+                d.id_direccion, d.id_zona, d.calle_avenida, d.numero_vivienda, 
+                d.referencia_adicional, d.nombre_destinatario, d.es_predeterminada,
+                ze.nombre_zona, ze.costo_envio_zona
+             FROM Direcciones d
+             JOIN ZonasEntrega ze ON d.id_zona = ze.id_zona
+             WHERE d.id_usuario = ? AND d.es_predeterminada = TRUE 
+             LIMIT 1`,
+            [id_usuario]
+        );
+        if (addressRows.length === 0) {
+            // Es importante devolver un 404 si no hay dirección predeterminada,
+            // para que el frontend sepa que no existe.
+            return res.status(404).json({ message: 'No se encontró dirección predeterminada para este usuario.' });
+        }
+        res.status(200).json(addressRows[0]);
+    } catch (error) {
+        console.error("Error al obtener dirección predeterminada:", error);
+        next(error);
+    }
+};
 
 module.exports = {
   registerUser,
   loginUser,
   getDeliveryZones,
+  getDefaultAddress, 
 };

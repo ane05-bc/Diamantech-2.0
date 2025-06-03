@@ -9,9 +9,6 @@ const generateOrderCode = () => {
 
 const createOrder = async (req, res, next) => {
   const id_usuario = req.user.id_usuario;
-  // La dirección se obtiene de la predeterminada del usuario.
-  // El costo de envío se obtendrá de la zona de la dirección predeterminada.
-
   const connection = await dbPool.getConnection();
   try {
     await connection.beginTransaction();

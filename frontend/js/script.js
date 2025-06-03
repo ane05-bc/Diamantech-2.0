@@ -82,14 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cartModalEl) cartModalEl.classList.remove('active');
         if (complaintModal) complaintModal.classList.remove('active');
         if (viewComplaintModal) viewComplaintModal.classList.remove('active');
-        console.log("DEBUG: hideAllModals() llamada.");
     }
 
     function openModal(modalElement) {
         hideAllModals(); 
         if (modalElement) {
             modalElement.classList.add('active');
-            console.log("DEBUG: Modal abierto:", modalElement.id);
         } else {
             console.error("Error: Se intentó abrir un modal que no existe o es nulo.");
         }
@@ -369,16 +367,56 @@ document.addEventListener('DOMContentLoaded', () => {
         cartItemCountMobileHeader.textContent = totalItems;
     }
 
+    // --- Checkout ---
     if(goToCheckoutBtn) goToCheckoutBtn.addEventListener('click', async () => {
-        if (!isLoggedIn()) { showToast('Debes iniciar sesión para proceder.', 'info'); openModal(authModal); return; }
-        if (cart.length === 0) { showToast('Tu carrito está vacío.', 'info'); return; }
+        if (!isLoggedIn()) { 
+            showToast('Debes iniciar sesión para proceder.', 'info'); 
+            openModal(authModal); 
+            return; 
+        }
+        if (cart.length === 0) { 
+            showToast('Tu carrito está vacío.', 'info'); 
+            return; 
+        }
+        
+        console.log("DEBUG: goToCheckoutBtn - Iniciando proceso de checkout.");
+        if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-gray-500">Verificando dirección...</p>`;
+
         try {
-            const addressResponse = await fetch(`${API_BASE_URL}/users/me/default-address`, { headers: { 'Authorization': `Bearer ${getToken()}` }});
-            if (!addressResponse.ok) { const errorData = await addressResponse.json().catch(() => ({})); showToast(errorData.message || 'No tienes dirección predeterminada.', 'info'); if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">No se encontró dirección. Configura una en "Mi Cuenta".</p>`; return; }
-            const address = await addressResponse.json();
+            const response = await fetch(`${API_BASE_URL}/auth/default-address`, { 
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            
+            console.log("DEBUG: goToCheckoutBtn - Respuesta de /auth/default-address:", response.status);
+
+            if (!response.ok) { 
+                const errorData = await response.json().catch(() => ({ message: 'No se pudo obtener la dirección. Asegúrate de tener una configurada.' })); 
+                console.error("DEBUG: goToCheckoutBtn - Error al obtener dirección:", errorData.message);
+                showToast(errorData.message || 'No tienes una dirección predeterminada. Por favor, configúrala en "Mi Cuenta".', 'error'); 
+                if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">${errorData.message || 'No se encontró dirección predeterminada. Ve a "Mi Cuenta" para añadir una.'}</p>`; 
+                // Opcional: Redirigir al perfil o mostrar opción para añadir dirección
+                // showView('profile'); 
+                return; 
+            }
+            
+            const address = await response.json();
+            console.log("DEBUG: goToCheckoutBtn - Dirección obtenida:", address);
+
+            if (!address || !address.id_direccion) { 
+                console.error("DEBUG: goToCheckoutBtn - Dirección obtenida pero inválida o sin id_direccion.");
+                showToast('No tienes una dirección predeterminada configurada. Por favor, ve a "Mi Cuenta".', 'error');
+                if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">No se encontró dirección predeterminada válida. Ve a "Mi Cuenta" para añadir una.</p>`; 
+                return;
+            }
+            
             loadCheckoutPage(address); 
             showView('checkout');
-        } catch (error) { console.error("Error al obtener dirección:", error); showToast('Error al cargar info de envío.', 'error'); }
+
+        } catch (error) { 
+            console.error("DEBUG: goToCheckoutBtn - Catch error:", error); 
+            showToast('Error al cargar información de envío. Intenta de nuevo.', 'error'); 
+            if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">Ocurrió un error al cargar tu dirección.</p>`;
+        }
     });
 
     if(backToCartBtn) backToCartBtn.addEventListener('click', () => { showView('main'); openModal(cartModalEl); });
@@ -387,14 +425,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!checkoutOrderSummaryEl || !checkoutSubtotalEl || !checkoutShippingEl || !checkoutTotalEl || !checkoutAddressInfo) return;
         checkoutOrderSummaryEl.innerHTML = '';
         let subtotal = 0;
-        const shippingCost = addressData ? parseFloat(addressData.costo_envio_zona) : 10.00; 
+        const shippingCost = addressData && addressData.costo_envio_zona !== undefined ? parseFloat(addressData.costo_envio_zona) : 10.00; 
         cart.forEach(item => { const itemEl = document.createElement('div'); itemEl.className = 'flex justify-between items-center text-sm py-1'; itemEl.innerHTML = `<span>${item.name} (x${item.quantity})</span> <span class="font-medium">$${(item.price * item.quantity).toFixed(2)}</span>`; checkoutOrderSummaryEl.appendChild(itemEl); subtotal += item.price * item.quantity; });
         checkoutSubtotalEl.textContent = `$${subtotal.toFixed(2)}`;
         checkoutShippingEl.textContent = `$${shippingCost.toFixed(2)}`;
         checkoutTotalEl.textContent = `$${(subtotal + shippingCost).toFixed(2)}`;
         if (addressData) {
             checkoutAddressInfo.innerHTML = `<h4 class="font-semibold mb-1">Enviar a:</h4> <p>${addressData.nombre_destinatario || (currentUser && currentUser.usuario ? currentUser.usuario.nombre_completo : '')}</p> <p>${addressData.calle_avenida}, Nro. ${addressData.numero_vivienda}</p> <p>Zona: ${addressData.nombre_zona}</p> ${addressData.referencia_adicional ? `<p>Ref: ${addressData.referencia_adicional}</p>` : ''} <p>Teléfono: ${(currentUser && currentUser.usuario ? currentUser.usuario.telefono : '') || 'No provisto'}</p>`;
-        } else { checkoutAddressInfo.innerHTML = `<p class="text-red-500">No se pudo cargar la dirección.</p>`; }
+        } else { checkoutAddressInfo.innerHTML = `<p class="text-red-500">No se pudo cargar la dirección. Por favor, asegúrate de tener una dirección predeterminada en "Mi Cuenta".</p>`; }
         if(shippingForm) shippingForm.classList.add('hidden'); 
     }
 
@@ -530,18 +568,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const profileAddressEl = document.getElementById('profileAddress');
         if(profileAddressEl) profileAddressEl.innerHTML = 'Cargando dirección...';
         try {
-            const addrResponse = await fetch(`${API_BASE_URL}/users/me/default-address`, { headers: { 'Authorization': `Bearer ${getToken()}` }});
+            const addrResponse = await fetch(`${API_BASE_URL}/auth/default-address`, { headers: { 'Authorization': `Bearer ${getToken()}` }});
             if(addrResponse.ok) {
                 const addr = await addrResponse.json();
-                if(profileAddressEl && addr) {
+                if(profileAddressEl && addr && addr.id_direccion) { 
                     profileAddressEl.innerHTML = `${addr.calle_avenida}, Nro. ${addr.numero_vivienda}<br>Zona: ${addr.nombre_zona}${addr.referencia_adicional ? `<br>Ref: ${addr.referencia_adicional}` : ''}`;
                 } else if (profileAddressEl) {
-                     profileAddressEl.textContent = 'No tienes una dirección predeterminada.';
+                     profileAddressEl.textContent = 'No tienes una dirección predeterminada o no se pudo cargar.';
                 }
-            } else if (profileAddressEl) {
-                profileAddressEl.textContent = 'Error al cargar dirección.';
+            } else {
+                const errorData = await addrResponse.json().catch(() => ({message: 'Error al obtener la dirección desde el servidor.'}));
+                if (profileAddressEl) profileAddressEl.textContent = errorData.message || 'Error al cargar dirección.';
             }
-        } catch (e) { if(profileAddressEl) profileAddressEl.textContent = 'Error al cargar dirección.'; }
+        } catch (e) { 
+            console.error("Error fetching default address:", e);
+            if(profileAddressEl) profileAddressEl.textContent = 'Error al cargar dirección.'; 
+        }
 
         if(orderHistoryContainer) orderHistoryContainer.innerHTML = '<p>Cargando historial de pedidos...</p>';
         try {
@@ -589,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     } else {
-        console.error("DEBUG: Botón 'closeComplaintModalBtn' NO encontrado en el DOM. El modal de registrar quejas no se podrá cerrar con este botón.");
+        console.error("DEBUG: Botón 'closeComplaintModalBtn' NO encontrado en el DOM.");
     }
 
     if (complaintForm) complaintForm.addEventListener('submit', async (e) => { 
@@ -653,9 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Asegurarse que todos los modales estén ocultos al cargar la página
     hideAllModals();
-    
     loadUserSession(); 
     fetchCategories(); 
     showView('main'); 
