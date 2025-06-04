@@ -1,6 +1,43 @@
 const dbPool = require('../config/db');
 
 // --- Gestión de Productos (Simplificado) ---
+const getAllProductsAdmin = async (req, res, next) => {
+    try {
+        const [products] = await dbPool.query(
+            `SELECT p.id_producto, p.nombre_producto, p.sku, p.precio, p.stock, p.activo, c.nombre_categoria 
+             FROM Productos p 
+             JOIN Categorias c ON p.id_categoria = c.id_categoria 
+             ORDER BY p.nombre_producto`
+        );
+        res.status(200).json(products);
+    } catch (error) {
+        next(error);
+    }
+};
+const getProductDetailsAdmin = async (req, res, next) => {
+    const { productId } = req.params;
+    try {
+        const [productRows] = await dbPool.query(
+            `SELECT p.*, c.nombre_categoria 
+             FROM Productos p
+             JOIN Categorias c ON p.id_categoria = c.id_categoria
+             WHERE p.id_producto = ?`, 
+            [productId]
+        );
+        if (productRows.length === 0) {
+            return res.status(404).json({ message: 'Producto no encontrado.' });
+        }
+        const product = productRows[0];
+        try {
+            product.galeria_imagenes_urls = product.galeria_imagenes_urls ? JSON.parse(product.galeria_imagenes_urls) : [];
+        } catch (e) {
+            product.galeria_imagenes_urls = []; 
+        }
+        res.status(200).json(product);
+    } catch (error) {
+        next(error);
+    }
+};
 const createProduct = async (req, res, next) => {
   const { id_categoria, nombre_producto, slug_producto, descripcion_corta, descripcion_larga, precio, stock, sku, imagen_principal_url, galeria_imagenes_urls, materiales, peso_gramos, dimensiones, activo } = req.body;
   if (!id_categoria || !nombre_producto || !slug_producto || precio === undefined || stock === undefined || !sku) {
@@ -66,7 +103,6 @@ const updateProduct = async (req, res, next) => {
     }
 };
 
-// (Mantener createCategory y updateCategory como estaban, pero asegurando que manejen 'activo')
 const createCategory = async (req, res, next) => {
   const { nombre_categoria, descripcion_categoria, imagen_url_categoria, slug_categoria, activo } = req.body;
   if (!nombre_categoria || !slug_categoria) {
@@ -95,7 +131,7 @@ const updateCategory = async (req, res, next) => {
   try {
     const [result] = await dbPool.query(
       'UPDATE Categorias SET nombre_categoria = ?, descripcion_categoria = ?, imagen_url_categoria = ?, slug_categoria = ?, activo = ? WHERE id_categoria = ?',
-      [nombre_categoria, descripcion_categoria || null, imagen_url_categoria || null, slug_categoria, activo !== undefined ? activo : true, categoryId]
+      [nombre_categoria, descripcion_categoria || null, imagen_url_categoria|| null, slug_categoria, activo !== undefined ? activo : true, categoryId]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Categoría no encontrada.' });
@@ -155,7 +191,6 @@ const getAllOrdersAdmin = async (req, res, next) => {
 const updateOrderStatusAdmin = async (req, res, next) => {
     const { orderId } = req.params;
     const { nuevo_estado } = req.body;
-    // Validar que nuevo_estado sea uno de los ENUM permitidos
     const validStates = ['pendiente_pago','pagado','en_proceso','enviado','entregado','cancelado','fallido'];
     if (!nuevo_estado || !validStates.includes(nuevo_estado)) {
         return res.status(400).json({ message: 'Estado de pedido no válido.' });
@@ -168,7 +203,6 @@ const updateOrderStatusAdmin = async (req, res, next) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Pedido no encontrado.' });
         }
-        // Aquí podrías añadir lógica para notificar al cliente sobre el cambio de estado
         res.status(200).json({ message: `Estado del pedido ${orderId} actualizado a ${nuevo_estado}.`});
     } catch (error) {
         next(error);
@@ -253,6 +287,7 @@ module.exports = {
   updateCategory,
   createProduct,
   updateProduct,
+  getAllProductsAdmin, getProductDetailsAdmin,
   getAllOrdersAdmin,
   updateOrderStatusAdmin,
   getAllComplaintsAdmin,

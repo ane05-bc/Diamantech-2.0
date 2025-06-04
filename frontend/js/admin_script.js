@@ -1,11 +1,12 @@
 // frontend/js/admin_script.js
-const API_BASE_URL = 'http://localhost:3000/api'; // Asegúrate que coincida
+const API_BASE_URL = 'http://localhost:3000/api'; 
 let adminToken = null;
 let currentEditingProductId = null;
 let currentEditingCategoryId = null;
 let currentViewingOrderId = null;
 let currentManagingComplaintId = null;
-let adminCategoriesCache = []; // Cache para select de categorías en formulario de producto
+let adminCategoriesCache = []; 
+let adminProductsCache = []; // Cache para productos
 
 document.addEventListener('DOMContentLoaded', () => {
     const adminLoginContainer = document.getElementById('adminLoginContainer');
@@ -37,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const orderFilterStatusSelect = document.getElementById('orderFilterStatus');
     const applyOrderFiltersBtn = document.getElementById('applyOrderFiltersBtn');
 
-
     const adminComplaintList = document.getElementById('adminComplaintList');
     const adminComplaintModal = document.getElementById('adminComplaintModal');
     const closeAdminComplaintModalBtn = document.getElementById('closeAdminComplaintModalBtn');
@@ -54,20 +54,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryForm = document.getElementById('categoryForm');
     const categoryModalTitle = document.getElementById('categoryModalTitle');
 
-
     // --- Autenticación Admin ---
     function checkAdminLogin() {
         adminToken = localStorage.getItem('diamantechAdminToken');
-        const adminUser = JSON.parse(localStorage.getItem('diamantechAdminUser'));
-        if (adminToken && adminUser && adminUser.rol === 'administrador') {
-            adminLoginContainer.classList.add('hidden');
-            adminDashboardContainer.classList.remove('hidden');
-            if (adminUserGreeting) adminUserGreeting.textContent = `Admin: ${adminUser.nombre_completo}`;
-            showAdminSection('orders'); // Mostrar pedidos por defecto
-        } else {
-            adminLoginContainer.classList.remove('hidden');
-            adminDashboardContainer.classList.add('hidden');
+        const adminUserString = localStorage.getItem('diamantechAdminUser');
+        
+        if (adminToken && adminUserString) {
+            try {
+                const adminUser = JSON.parse(adminUserString);
+                if (adminUser && adminUser.rol === 'administrador') {
+                    if(adminLoginContainer) adminLoginContainer.classList.add('hidden');
+                    if(adminDashboardContainer) adminDashboardContainer.classList.remove('hidden');
+                    if (adminUserGreeting) adminUserGreeting.textContent = `Admin: ${adminUser.nombre_completo || adminUser.email}`;
+                    showAdminSection('orders'); 
+                    return;
+                }
+            } catch (e) {
+                console.error("Error parsing admin user from localStorage", e);
+            }
         }
+        // Si no hay token, o no es admin, o hay error, mostrar login
+        if(adminLoginContainer) adminLoginContainer.classList.remove('hidden');
+        if(adminDashboardContainer) adminDashboardContainer.classList.add('hidden');
     }
 
     if (adminLoginForm) {
@@ -75,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const email = adminLoginForm.email.value;
             const password = adminLoginForm.password.value;
+            const submitButton = adminLoginForm.querySelector('button[type="submit"]');
+            if(submitButton) submitButton.disabled = true;
+
             try {
                 const response = await fetch(`${API_BASE_URL}/auth/login`, {
                     method: 'POST',
@@ -82,15 +93,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ email, password })
                 });
                 const data = await response.json();
-                if (!response.ok || data.usuario.rol !== 'administrador') {
-                    throw new Error(data.message || 'Acceso denegado. Solo administradores.');
+                if (!response.ok || !data.usuario || data.usuario.rol !== 'administrador') {
+                    throw new Error(data.message || 'Acceso denegado. Solo administradores o credenciales incorrectas.');
                 }
                 localStorage.setItem('diamantechAdminToken', data.token);
-                localStorage.setItem('diamantechAdminUser', JSON.stringify(data.usuario));
+                localStorage.setItem('diamantechAdminUser', JSON.stringify(data.usuario)); // Guardar todo el objeto usuario
                 adminToken = data.token;
                 checkAdminLogin();
             } catch (error) {
                 alert(`Error de login: ${error.message}`);
+            } finally {
+                if(submitButton) submitButton.disabled = false;
             }
         });
     }
@@ -100,16 +113,20 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('diamantechAdminToken');
             localStorage.removeItem('diamantechAdminUser');
             adminToken = null;
-            checkAdminLogin();
+            window.location.href = 'index.html'; // Redirigir a la página principal de clientes
         });
     }
 
     // --- Navegación Admin ---
     function showAdminSection(sectionId) {
         adminSections.forEach(section => section.classList.add('hidden'));
-        document.getElementById(`admin${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}Section`).classList.remove('hidden');
+        const sectionElement = document.getElementById(`admin${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}Section`);
+        if (sectionElement) {
+            sectionElement.classList.remove('hidden');
+        } else {
+            console.error(`Sección admin no encontrada: admin${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}Section`);
+        }
         
-        // Resaltar botón activo
         adminNavBtns.forEach(btn => {
             btn.classList.remove('bg-blue-200', 'text-blue-800', 'font-semibold');
             btn.classList.add('hover:bg-blue-100', 'text-blue-700');
@@ -119,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Cargar datos de la sección
         if (sectionId === 'products') loadAdminProducts();
         if (sectionId === 'orders') loadAdminOrders();
         if (sectionId === 'complaints') loadAdminComplaints();
@@ -135,21 +151,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!adminCategoryList) return;
         adminCategoryList.innerHTML = 'Cargando categorías...';
         try {
-            // Usamos el endpoint público, ya que el admin también necesita verlas
-            const response = await fetch(`${API_BASE_URL}/products/categories`, {
-                headers: { 'Authorization': `Bearer ${adminToken}` } // Aunque sea público, enviar token por si acaso
+            const response = await fetch(`${API_BASE_URL}/products/categories`, { // Endpoint público para categorías
+                headers: { 'Authorization': `Bearer ${adminToken}` } 
             });
             if (!response.ok) throw new Error('Error al cargar categorías');
             const categories = await response.json();
-            adminCategoriesCache = categories; // Guardar para el select de productos
+            adminCategoriesCache = categories; 
             renderAdminCategories(categories);
-            populateCategorySelect(categories); // Para el formulario de productos
+            populateCategorySelect(categories); 
         } catch (error) {
             adminCategoryList.innerHTML = `<p class="text-red-500">${error.message}</p>`;
         }
     }
 
     function renderAdminCategories(categories) {
+        if (!adminCategoryList) return;
         if (categories.length === 0) {
             adminCategoryList.innerHTML = '<p>No hay categorías creadas.</p>'; return;
         }
@@ -169,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="py-2 px-3 text-sm">${cat.activo ? 'Sí' : 'No'}</td>
                         <td class="py-2 px-3 text-sm">
                             <button class="edit-category-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${cat.id_categoria}"><i class="fas fa-edit"></i></button>
-                            </td>
+                        </td>
                     </tr>
                 `).join('')}
                 </tbody>
@@ -180,13 +196,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if(showAddCategoryModalBtn) showAddCategoryModalBtn.addEventListener('click', () => {
         currentEditingCategoryId = null;
-        categoryModalTitle.textContent = 'Añadir Categoría';
-        categoryForm.reset();
-        document.getElementById('categoryActivo').checked = true;
-        categoryModal.classList.remove('hidden');
-        categoryModal.classList.add('flex');
+        if(categoryModalTitle) categoryModalTitle.textContent = 'Añadir Categoría';
+        if(categoryForm) categoryForm.reset();
+        const activoCheckbox = document.getElementById('categoryActivo');
+        if(activoCheckbox) activoCheckbox.checked = true;
+        if(categoryModal) {
+            categoryModal.classList.remove('hidden');
+            categoryModal.classList.add('flex');
+        }
     });
-    if(closeCategoryModalBtn) closeCategoryModalBtn.addEventListener('click', () => categoryModal.classList.add('hidden'));
+    if(closeCategoryModalBtn) closeCategoryModalBtn.addEventListener('click', () => {if(categoryModal) categoryModal.classList.add('hidden')});
 
     if(categoryForm) categoryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -211,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Error al guardar categoría');
             alert(result.message);
-            categoryModal.classList.add('hidden');
+            if(categoryModal) categoryModal.classList.add('hidden');
             loadAdminCategories();
         } catch (error) {
             alert(`Error: ${error.message}`);
@@ -224,31 +243,33 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!category) { alert('Categoría no encontrada'); return; }
 
         currentEditingCategoryId = categoryId;
-        categoryModalTitle.textContent = 'Editar Categoría';
-        categoryForm.nombre_categoria.value = category.nombre_categoria;
-        categoryForm.slug_categoria.value = category.slug_categoria;
-        categoryForm.descripcion_categoria.value = category.descripcion_categoria || '';
-        categoryForm.imagen_url_categoria.value = category.imagen_url_categoria || '';
-        categoryForm.activo.checked = category.activo;
-        categoryModal.classList.remove('hidden');
-        categoryModal.classList.add('flex');
+        if(categoryModalTitle) categoryModalTitle.textContent = 'Editar Categoría';
+        if(categoryForm) {
+            categoryForm.nombre_categoria.value = category.nombre_categoria;
+            categoryForm.slug_categoria.value = category.slug_categoria;
+            categoryForm.descripcion_categoria.value = category.descripcion_categoria || '';
+            categoryForm.imagen_url_categoria.value = category.imagen_url_categoria || '';
+            categoryForm.activo.checked = category.activo;
+        }
+        if(categoryModal) {
+            categoryModal.classList.remove('hidden');
+            categoryModal.classList.add('flex');
+        }
     }
-
 
     // --- Gestión de Productos (Admin) ---
     async function loadAdminProducts() {
         if (!adminProductList) return;
         adminProductList.innerHTML = 'Cargando productos...';
-        await loadAdminCategories(); // Asegurar que las categorías estén cargadas para el select
+        // Primero cargar categorías para el select del formulario de producto
+        await loadAdminCategories(); 
         try {
-            // Necesitamos un endpoint para listar TODOS los productos para el admin, incluyendo inactivos
-            // Por ahora, usaremos el público y filtraremos en cliente o crearemos uno nuevo en backend.
-            // Asumamos que tenemos un endpoint /admin/products que trae todos.
-            const response = await fetch(`${API_BASE_URL}/admin/products-all`, { // Endpoint NUEVO necesario
+            const response = await fetch(`${API_BASE_URL}/admin/products-all`, { 
                  headers: { 'Authorization': `Bearer ${adminToken}` }
             });
             if (!response.ok) throw new Error('Error al cargar productos');
             const products = await response.json();
+            adminProductsCache = products; // Guardar en caché
             renderAdminProducts(products);
         } catch (error) {
             adminProductList.innerHTML = `<p class="text-red-500">${error.message}</p>`;
@@ -256,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderAdminProducts(products) {
+        if (!adminProductList) return;
         if (products.length === 0) {
             adminProductList.innerHTML = '<p>No hay productos creados.</p>'; return;
         }
@@ -279,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="py-2 px-3 text-sm">${p.activo ? 'Sí' : 'No'}</td>
                         <td class="py-2 px-3 text-sm">
                             <button class="edit-product-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${p.id_producto}"><i class="fas fa-edit"></i></button>
-                            </td>
+                        </td>
                     </tr>
                 `).join('')}
                 </tbody>
@@ -292,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!productCategorySelect) return;
         productCategorySelect.innerHTML = '<option value="">Seleccione categoría...</option>';
         categories.forEach(cat => {
-            if (cat.activo) { // Solo categorías activas para asignar a productos
+            if (cat.activo) { 
                 const option = document.createElement('option');
                 option.value = cat.id_categoria;
                 option.textContent = cat.nombre_categoria;
@@ -303,13 +325,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(showAddProductModalBtn) showAddProductModalBtn.addEventListener('click', () => {
         currentEditingProductId = null;
-        productModalTitle.textContent = 'Añadir Producto';
-        productForm.reset();
-        document.getElementById('productActivo').checked = true;
-        productModal.classList.remove('hidden');
-        productModal.classList.add('flex');
+        if(productModalTitle) productModalTitle.textContent = 'Añadir Producto';
+        if(productForm) productForm.reset();
+        const activoCheckbox = document.getElementById('productActivo');
+        if(activoCheckbox) activoCheckbox.checked = true;
+        populateCategorySelect(adminCategoriesCache); // Asegurar que el select esté poblado
+        if(productModal) {
+            productModal.classList.remove('hidden');
+            productModal.classList.add('flex');
+        }
     });
-    if(closeProductModalBtn) closeProductModalBtn.addEventListener('click', () => productModal.classList.add('hidden'));
+    if(closeProductModalBtn) closeProductModalBtn.addEventListener('click', () => {if(productModal) productModal.classList.add('hidden')});
 
     if(productForm) productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -323,8 +349,10 @@ document.addEventListener('DOMContentLoaded', () => {
             descripcion_corta: productForm.descripcion_corta.value,
             descripcion_larga: productForm.descripcion_larga.value,
             imagen_principal_url: productForm.imagen_principal_url.value,
-            galeria_imagenes_urls: productForm.galeria_imagenes_urls.value, // Dejar como string, el backend parsea
+            galeria_imagenes_urls: productForm.galeria_imagenes_urls.value, 
             materiales: productForm.materiales.value,
+            peso_gramos: productForm.peso_gramos.value ? parseFloat(productForm.peso_gramos.value) : null,
+            dimensiones: productForm.dimensiones.value,
             activo: productForm.activo.checked,
         };
         const url = currentEditingProductId 
@@ -341,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Error al guardar producto');
             alert(result.message);
-            productModal.classList.add('hidden');
+            if(productModal) productModal.classList.add('hidden');
             loadAdminProducts();
         } catch (error) {
             alert(`Error: ${error.message}`);
@@ -350,31 +378,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function openEditProductModal(event) {
         const productId = event.currentTarget.dataset.id;
-        // Necesitamos un endpoint para obtener un producto específico para admin, incluyendo todos sus campos
+        // Usar el caché si es posible, o hacer fetch si no está en caché (mejor hacer fetch para datos frescos)
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, { // Endpoint NUEVO necesario
+            const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, { 
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
-            if (!response.ok) throw new Error('Error al cargar datos del producto');
+            if (!response.ok) throw new Error('Error al cargar datos del producto para editar');
             const product = await response.json();
 
             currentEditingProductId = productId;
-            productModalTitle.textContent = 'Editar Producto';
-            productForm.nombre_producto.value = product.nombre_producto;
-            productForm.slug_producto.value = product.slug_producto;
-            productForm.id_categoria.value = product.id_categoria;
-            productForm.precio.value = product.precio;
-            productForm.stock.value = product.stock;
-            productForm.sku.value = product.sku;
-            productForm.descripcion_corta.value = product.descripcion_corta || '';
-            productForm.descripcion_larga.value = product.descripcion_larga || '';
-            productForm.imagen_principal_url.value = product.imagen_principal_url || '';
-            productForm.galeria_imagenes_urls.value = product.galeria_imagenes_urls ? JSON.stringify(product.galeria_imagenes_urls) : '';
-            productForm.materiales.value = product.materiales || '';
-            productForm.activo.checked = product.activo;
-            
-            productModal.classList.remove('hidden');
-            productModal.classList.add('flex');
+            if(productModalTitle) productModalTitle.textContent = 'Editar Producto';
+            if(productForm) {
+                productForm.nombre_producto.value = product.nombre_producto || '';
+                productForm.slug_producto.value = product.slug_producto || '';
+                populateCategorySelect(adminCategoriesCache); // Poblar antes de setear valor
+                productForm.id_categoria.value = product.id_categoria || '';
+                productForm.precio.value = product.precio || '';
+                productForm.stock.value = product.stock || 0;
+                productForm.sku.value = product.sku || '';
+                productForm.descripcion_corta.value = product.descripcion_corta || '';
+                productForm.descripcion_larga.value = product.descripcion_larga || '';
+                productForm.imagen_principal_url.value = product.imagen_principal_url || '';
+                productForm.galeria_imagenes_urls.value = product.galeria_imagenes_urls && Array.isArray(product.galeria_imagenes_urls) ? JSON.stringify(product.galeria_imagenes_urls) : '[]';
+                productForm.materiales.value = product.materiales || '';
+                productForm.peso_gramos.value = product.peso_gramos || '';
+                productForm.dimensiones.value = product.dimensiones || '';
+                productForm.activo.checked = product.activo;
+            }
+            if(productModal) {
+                productModal.classList.remove('hidden');
+                productModal.classList.add('flex');
+            }
         } catch (error) {
             alert(`Error: ${error.message}`);
         }
@@ -407,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function renderAdminOrders(orders) {
+        if (!adminOrderList) return;
         if (orders.length === 0) {
             adminOrderList.innerHTML = '<p>No hay pedidos que coincidan con los filtros.</p>'; return;
         }
@@ -452,16 +487,18 @@ document.addEventListener('DOMContentLoaded', () => {
         currentViewingOrderId = event.currentTarget.dataset.id;
         if (!adminOrderDetailModal || !adminOrderDetailContent) return;
         adminOrderDetailContent.innerHTML = 'Cargando detalles del pedido...';
-        adminOrderDetailModal.classList.remove('hidden');
-        adminOrderDetailModal.classList.add('flex');
+        if(adminOrderDetailModal) {
+            adminOrderDetailModal.classList.remove('hidden');
+            adminOrderDetailModal.classList.add('flex');
+        }
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/orders/${currentViewingOrderId}`, {
+            const response = await fetch(`${API_BASE_URL}/admin/orders/${currentViewingOrderId}`, { // Usa el endpoint de admin/orders/:orderId que definimos en adminRoutes
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
             if (!response.ok) throw new Error('Error al cargar detalles del pedido');
             const order = await response.json();
-            orderModalTitle.textContent = `Detalles del Pedido #${order.codigo_pedido}`;
-            adminUpdateOrderStatusSelect.value = order.estado_pedido;
+            if(orderModalTitle) orderModalTitle.textContent = `Detalles del Pedido #${order.codigo_pedido}`;
+            if(adminUpdateOrderStatusSelect) adminUpdateOrderStatusSelect.value = order.estado_pedido;
             
             let itemsHtml = order.detalles.map(item => `
                 <tr>
@@ -502,10 +539,10 @@ document.addEventListener('DOMContentLoaded', () => {
             adminOrderDetailContent.innerHTML = `<p class="text-red-500">${error.message}</p>`;
         }
     }
-    if(closeAdminOrderDetailModalBtn) closeAdminOrderDetailModalBtn.addEventListener('click', () => adminOrderDetailModal.classList.add('hidden'));
+    if(closeAdminOrderDetailModalBtn) closeAdminOrderDetailModalBtn.addEventListener('click', () => {if(adminOrderDetailModal) adminOrderDetailModal.classList.add('hidden')});
     
     if(submitUpdateOrderStatusBtn) submitUpdateOrderStatusBtn.addEventListener('click', async () => {
-        if (!currentViewingOrderId) return;
+        if (!currentViewingOrderId || !adminUpdateOrderStatusSelect) return;
         const nuevo_estado = adminUpdateOrderStatusSelect.value;
         try {
             const response = await fetch(`${API_BASE_URL}/admin/orders/${currentViewingOrderId}/status`, {
@@ -516,8 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Error al actualizar estado');
             alert(result.message);
-            adminOrderDetailModal.classList.add('hidden');
-            loadAdminOrders(); // Recargar lista de pedidos
+            if(adminOrderDetailModal) adminOrderDetailModal.classList.add('hidden');
+            loadAdminOrders(); 
         } catch (error) {
             alert(`Error: ${error.message}`);
         }
@@ -525,7 +562,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if(downloadOrderInfoBtn) downloadOrderInfoBtn.addEventListener('click', async () => {
         if (!currentViewingOrderId) { alert('Primero abre un pedido.'); return; }
-        // Re-fetch order details to ensure data is current, or use cached if available and deemed safe
         try {
             const response = await fetch(`${API_BASE_URL}/admin/orders/${currentViewingOrderId}`, {
                 headers: { 'Authorization': `Bearer ${adminToken}` }
@@ -549,10 +585,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             deliveryText += `\nTotal a Cobrar (si aplica, verificar estado de pago): Bs. ${parseFloat(order.total_pedido).toFixed(2)}\n`;
             deliveryText += `Estado del Pedido: ${formatAdminOrderStatus(order.estado_pedido)}\n`;
-            if (order.notas_cliente) deliveryText += `\nNotas del Cliente: ${order.notas_cliente}\n`;
+            if (order.notas_cliente) deliveryText += `\nNotas del Cliente: ${order.notas_cliente}\n`; // Asumiendo que tienes notas_cliente en Pedidos
             deliveryText += `---------------------------------`;
 
-            // Crear un blob y descargar
             const blob = new Blob([deliveryText], { type: 'text/plain;charset=utf-8' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -590,6 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function renderAdminComplaints(complaints) {
+         if (!adminComplaintList) return;
          if (complaints.length === 0) {
             adminComplaintList.innerHTML = '<p>No hay quejas que coincidan con los filtros.</p>'; return;
         }
@@ -627,8 +663,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!adminComplaintModal || !adminComplaintDetailContent || !adminComplaintResponseForm) return;
         adminComplaintDetailContent.innerHTML = 'Cargando detalles de la queja...';
         adminComplaintResponseForm.reset();
-        adminComplaintModal.classList.remove('hidden');
-        adminComplaintModal.classList.add('flex');
+        if(adminComplaintModal) {
+            adminComplaintModal.classList.remove('hidden');
+            adminComplaintModal.classList.add('flex');
+        }
 
         try {
             const response = await fetch(`${API_BASE_URL}/admin/complaints/${currentManagingComplaintId}`, {
@@ -636,7 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!response.ok) throw new Error('Error al cargar detalles de la queja');
             const complaint = await response.json();
-            complaintModalTitleAdmin.textContent = `Gestionar Queja #${complaint.id_queja} (Pedido ${complaint.codigo_pedido})`;
+            if(complaintModalTitleAdmin) complaintModalTitleAdmin.textContent = `Gestionar Queja #${complaint.id_queja} (Pedido ${complaint.codigo_pedido})`;
             adminComplaintDetailContent.innerHTML = `
                 <p><strong>Cliente:</strong> ${complaint.cliente_nombre} (${complaint.cliente_email})</p>
                 <p><strong>Fecha Queja:</strong> ${new Date(complaint.fecha_queja).toLocaleString()}</p>
@@ -648,13 +686,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (complaint.respuesta_admin) {
                 document.getElementById('adminComplaintResponseText').value = complaint.respuesta_admin;
             }
-            document.getElementById('adminComplaintNewStatus').value = complaint.estado_queja; // O el siguiente estado lógico
+            document.getElementById('adminComplaintNewStatus').value = complaint.estado_queja; 
 
         } catch (error) {
             adminComplaintDetailContent.innerHTML = `<p class="text-red-500">${error.message}</p>`;
         }
     }
-    if(closeAdminComplaintModalBtn) closeAdminComplaintModalBtn.addEventListener('click', () => adminComplaintModal.classList.add('hidden'));
+    if(closeAdminComplaintModalBtn) closeAdminComplaintModalBtn.addEventListener('click', () => {if(adminComplaintModal) adminComplaintModal.classList.add('hidden')});
 
     if(adminComplaintResponseForm) adminComplaintResponseForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -672,8 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Error al responder queja');
             alert(result.message);
-            adminComplaintModal.classList.add('hidden');
-            loadAdminComplaints(); // Recargar lista
+            if(adminComplaintModal) adminComplaintModal.classList.add('hidden');
+            loadAdminComplaints(); 
         } catch (error) {
             alert(`Error: ${error.message}`);
         }

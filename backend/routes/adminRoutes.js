@@ -2,10 +2,11 @@ const express = require('express');
 const {
   createCategory, updateCategory,
   createProduct, updateProduct,
-  getAllOrdersAdmin, updateOrderStatusAdmin, // getOrderDetailsAdmin se usa desde orderRoutes con verificación de rol
+  getAllProductsAdmin, getProductDetailsAdmin,
+  getAllOrdersAdmin, updateOrderStatusAdmin,
   getAllComplaintsAdmin, getComplaintDetailsAdmin, respondToComplaintAdmin
 } = require('../controllers/adminController');
-const { getOrderDetails } = require('../controllers/orderController'); // Para admin ver detalle pedido
+const { getOrderDetails } = require('../controllers/orderController'); 
 const { protect } = require('../middleware/authMiddleware');
 const { authorizeRoles } = require('../middleware/roleMiddleware');
 
@@ -21,6 +22,8 @@ router.put('/categories/:categoryId', updateCategory);
 // Productos (Simplificado)
 router.post('/products', createProduct);
 router.put('/products/:productId', updateProduct);
+router.get('/products-all', getAllProductsAdmin); 
+router.get('/products/:productId', getProductDetailsAdmin);
 
 // Pedidos
 router.get('/orders', getAllOrdersAdmin);

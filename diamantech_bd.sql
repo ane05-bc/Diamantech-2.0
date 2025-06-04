@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 02-06-2025 a las 23:33:13
+-- Tiempo de generación: 04-06-2025 a las 05:08:51
 -- Versión del servidor: 10.4.24-MariaDB
 -- Versión de PHP: 7.4.29
 
@@ -33,6 +33,13 @@ CREATE TABLE `carrito` (
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
   `ultima_modificacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Volcado de datos para la tabla `carrito`
+--
+
+INSERT INTO `carrito` (`id_carrito`, `id_usuario`, `fecha_creacion`, `ultima_modificacion`) VALUES
+(1, 1, '2025-06-03 00:38:16', '2025-06-03 00:38:16');
 
 -- --------------------------------------------------------
 
@@ -76,6 +83,13 @@ CREATE TABLE `detallespedido` (
   `subtotal_item` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- Volcado de datos para la tabla `detallespedido`
+--
+
+INSERT INTO `detallespedido` (`id_detalle_pedido`, `id_pedido`, `id_producto`, `nombre_producto_historico`, `sku_historico`, `cantidad_comprada`, `precio_unitario_compra`, `subtotal_item`) VALUES
+(1, 1, 1, 'Anillo Diamante Solitario', 'DIA-AN-SOL01', 2, '1250.00', '2500.00');
+
 -- --------------------------------------------------------
 
 --
@@ -93,6 +107,14 @@ CREATE TABLE `direcciones` (
   `es_predeterminada` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- Volcado de datos para la tabla `direcciones`
+--
+
+INSERT INTO `direcciones` (`id_direccion`, `id_usuario`, `id_zona`, `calle_avenida`, `numero_vivienda`, `referencia_adicional`, `nombre_destinatario`, `es_predeterminada`) VALUES
+(1, 1, 4, '2', '1003', NULL, 'Paula Paredes', 1),
+(2, 3, 6, '2A', '1001', NULL, 'Esmeralda Medina', 1);
+
 -- --------------------------------------------------------
 
 --
@@ -107,6 +129,13 @@ CREATE TABLE `itemscarrito` (
   `precio_unitario_al_agregar` decimal(10,2) NOT NULL,
   `fecha_agregado` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Volcado de datos para la tabla `itemscarrito`
+--
+
+INSERT INTO `itemscarrito` (`id_item_carrito`, `id_carrito`, `id_producto`, `cantidad`, `precio_unitario_al_agregar`, `fecha_agregado`) VALUES
+(2, 1, 1, 8, '1250.00', '2025-06-04 01:56:09');
 
 -- --------------------------------------------------------
 
@@ -129,6 +158,13 @@ CREATE TABLE `pedidos` (
   `notas_cliente` text DEFAULT NULL,
   `fecha_ultima_actualizacion_estado` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Volcado de datos para la tabla `pedidos`
+--
+
+INSERT INTO `pedidos` (`id_pedido`, `id_usuario`, `id_direccion_envio`, `codigo_pedido`, `fecha_pedido`, `estado_pedido`, `subtotal_productos`, `costo_envio`, `total_pedido`, `metodo_pago_info`, `referencia_pago_qr`, `notas_cliente`, `fecha_ultima_actualizacion_estado`) VALUES
+(1, 1, 1, 'DIA-MBFXOJMC-MKXG7', '2025-06-03 03:03:00', 'entregado', '2500.00', '15.00', '2515.00', 'QR Transferencia', 'DIA-MBFXOJMC-MKXG7', NULL, '2025-06-04 00:46:57');
 
 -- --------------------------------------------------------
 
@@ -161,7 +197,7 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id_producto`, `id_categoria`, `nombre_producto`, `slug_producto`, `descripcion_corta`, `descripcion_larga`, `precio`, `stock`, `sku`, `imagen_principal_url`, `galeria_imagenes_urls`, `materiales`, `peso_gramos`, `dimensiones`, `activo`, `fecha_creacion`, `fecha_actualizacion`) VALUES
-(1, 1, 'Anillo Diamante Solitario', 'anillosdiamante', 'Clásico anillo de compromiso con diamante brillante.', 'Fabricado en oro blanco de 18k, este anillo presenta un diamante central de 0.5 quilates, corte brillante, color G, claridad VS1. Diseño atemporal que simboliza el amor eterno. ', '1250.00', 10, 'DIA-AN-SOL01', 'img/catalogo/anillos/anillo2.jpg', '[\"img1.jpg\", \"img2.jpg\"]', 'Oro Blanco 18k, Diamante', '3.50', 'Talla 5-9', 1, '2025-05-29 23:15:38', '2025-05-29 23:15:38');
+(1, 1, 'Anillo Diamante Solitario', 'anillosdiamante', 'Clásico anillo de compromiso con diamante brillante.', 'Fabricado en oro blanco de 18k, este anillo presenta un diamante central de 0.5 quilates, corte brillante, color G, claridad VS1. Diseño atemporal que simboliza el amor eterno. ', '1250.00', 8, 'DIA-AN-SOL01', 'img/catalogo/anillos/anillo2.jpg', '[\"img1.jpg\", \"img2.jpg\"]', 'Oro Blanco 18k, Diamante', '3.50', 'Talla 5-9', 1, '2025-05-29 23:15:38', '2025-06-03 03:03:01');
 
 -- --------------------------------------------------------
 
@@ -180,6 +216,13 @@ CREATE TABLE `quejaspedido` (
   `fecha_respuesta_admin` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+--
+-- Volcado de datos para la tabla `quejaspedido`
+--
+
+INSERT INTO `quejaspedido` (`id_queja`, `id_pedido`, `id_usuario`, `descripcion_queja`, `fecha_queja`, `estado_queja`, `respuesta_admin`, `fecha_respuesta_admin`) VALUES
+(1, 1, 1, 'No tengo quejas, buen servicio', '2025-06-04 00:47:26', 'cerrada_admin', 'Me alegra mucho, espero que le guste sus anillos.', '2025-06-04 00:48:15');
+
 -- --------------------------------------------------------
 
 --
@@ -196,6 +239,14 @@ CREATE TABLE `usuarios` (
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp(),
   `ultima_conexion` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Volcado de datos para la tabla `usuarios`
+--
+
+INSERT INTO `usuarios` (`id_usuario`, `nombre_completo`, `email`, `password_hash`, `telefono`, `rol`, `fecha_registro`, `ultima_conexion`) VALUES
+(1, 'Paula Paredes', 'esmeralda.medina.p@ucb.edu.bo', '$2b$10$HTnkkpRZwAPgDywkplc5Aulkyw2an7tJAZcMRF2zNie5/eXhqwzk.', '69847149', 'cliente', '2025-06-03 00:37:59', NULL),
+(3, 'Esmeralda Medina', 'medina.esmeralda.paula@gmail.com', '$2b$10$QywIw21CQ14yXFvqY.PNR.RBsFx9jSVy6bJiKuLCnbHC6spN9XskO', '69847149', 'administrador', '2025-06-03 03:07:12', NULL);
 
 -- --------------------------------------------------------
 
@@ -316,7 +367,7 @@ ALTER TABLE `zonasentrega`
 -- AUTO_INCREMENT de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  MODIFY `id_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `categorias`
@@ -328,25 +379,25 @@ ALTER TABLE `categorias`
 -- AUTO_INCREMENT de la tabla `detallespedido`
 --
 ALTER TABLE `detallespedido`
-  MODIFY `id_detalle_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_detalle_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_direccion` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `itemscarrito`
 --
 ALTER TABLE `itemscarrito`
-  MODIFY `id_item_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_item_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
@@ -358,13 +409,13 @@ ALTER TABLE `productos`
 -- AUTO_INCREMENT de la tabla `quejaspedido`
 --
 ALTER TABLE `quejaspedido`
-  MODIFY `id_queja` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_queja` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id_usuario` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `zonasentrega`

@@ -97,6 +97,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveUserSession(userData) {
         localStorage.setItem('diamantechUser', JSON.stringify(userData));
         currentUser = userData;
+        if (currentUser && currentUser.usuario && currentUser.usuario.rol === 'administrador') {
+            showToast('Bienvenido Admin. Redirigiendo al panel...', 'success');
+            localStorage.setItem('diamantechAdminToken', currentUser.token); // admin_script.js buscará esto
+            localStorage.setItem('diamantechAdminUser', JSON.stringify(currentUser.usuario)); // admin_script.js buscará esto
+            
+            window.location.href = 'admin.html';
+            return; 
+        }
         updateUserUI();
         fetchCart(); 
     }
@@ -113,6 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function clearUserSession() {
         localStorage.removeItem('diamantechUser');
+        localStorage.removeItem('diamantechAdminToken');
+        localStorage.removeItem('diamantechAdminUser');
         currentUser = null;
         cart = []; 
         updateUserUI();
@@ -515,8 +525,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al iniciar sesión');
             saveUserSession(data); 
-            showToast('Inicio de sesión exitoso.', 'success');
-            if(authModal) authModal.classList.remove('active'); 
+            if (currentUser && currentUser.usuario && currentUser.usuario.rol !== 'administrador') {
+                showToast('Inicio de sesión exitoso.', 'success');
+                if(authModal) authModal.classList.remove('active'); 
+            }
         } catch (error) { console.error('Error de login:', error); showToast(error.message, 'error'); } 
         finally { if(submitButton) { submitButton.disabled = false; submitButton.textContent = 'Ingresar';} }
     });

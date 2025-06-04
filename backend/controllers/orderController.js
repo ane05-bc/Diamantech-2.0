@@ -129,7 +129,7 @@ const getUserOrders = async (req, res, next) => {
 };
 
 const getOrderDetails = async (req, res, next) => {
-    const id_usuario = req.user.id_usuario; // O admin
+    const id_usuario = req.user.id_usuario; 
     const { orderId } = req.params;
     try {
         const queryParams = [orderId];
@@ -178,7 +178,7 @@ const getOrderDetails = async (req, res, next) => {
 // --- Quejas ---
 const submitOrderComplaint = async (req, res, next) => {
     const id_usuario = req.user.id_usuario;
-    const { orderId } = req.params; // id_pedido
+    const { orderId } = req.params; 
     const { descripcion_queja } = req.body;
 
     if (!descripcion_queja || descripcion_queja.trim() === '') {
