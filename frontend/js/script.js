@@ -24,6 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeViewComplaintModalBtn = document.getElementById('closeViewComplaintModalBtn'); 
     const viewComplaintDetailsContainer = document.getElementById('viewComplaintDetailsContainer'); 
 
+    const clientOrderDetailModal = document.getElementById('clientOrderDetailModal'); // NUEVO
+    const closeClientOrderDetailModalBtn = document.getElementById('closeClientOrderDetailModalBtn'); // NUEVO
+    const clientOrderDetailModalTitle = document.getElementById('clientOrderDetailModalTitle'); // NUEVO
+    const clientOrderDetailModalContent = document.getElementById('clientOrderDetailModalContent'); // NUEVO
+
+
     const cartModalEl = document.getElementById('cartModal'); 
     const closeCartBtn = document.getElementById('closeCartBtn');
     const authModal = document.getElementById('authModal');
@@ -82,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cartModalEl) cartModalEl.classList.remove('active');
         if (complaintModal) complaintModal.classList.remove('active');
         if (viewComplaintModal) viewComplaintModal.classList.remove('active');
+        if (clientOrderDetailModal) clientOrderDetailModal.classList.remove('active'); // NUEVO
     }
 
     function openModal(modalElement) {
@@ -97,14 +104,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveUserSession(userData) {
         localStorage.setItem('diamantechUser', JSON.stringify(userData));
         currentUser = userData;
+
         if (currentUser && currentUser.usuario && currentUser.usuario.rol === 'administrador') {
             showToast('Bienvenido Admin. Redirigiendo al panel...', 'success');
-            localStorage.setItem('diamantechAdminToken', currentUser.token); // admin_script.js buscará esto
-            localStorage.setItem('diamantechAdminUser', JSON.stringify(currentUser.usuario)); // admin_script.js buscará esto
+            localStorage.setItem('diamantechAdminToken', currentUser.token); 
+            localStorage.setItem('diamantechAdminUser', JSON.stringify(currentUser.usuario)); 
             
-            window.location.href = 'admin.html';
+            window.location.href = 'admin.html'; 
             return; 
         }
+        
         updateUserUI();
         fetchCart(); 
     }
@@ -377,7 +386,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cartItemCountMobileHeader.textContent = totalItems;
     }
 
-    // --- Checkout ---
     if(goToCheckoutBtn) goToCheckoutBtn.addEventListener('click', async () => {
         if (!isLoggedIn()) { 
             showToast('Debes iniciar sesión para proceder.', 'info'); 
@@ -389,31 +397,27 @@ document.addEventListener('DOMContentLoaded', () => {
             return; 
         }
         
-        console.log("DEBUG: goToCheckoutBtn - Iniciando proceso de checkout.");
         if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-gray-500">Verificando dirección...</p>`;
-
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/default-address`, { 
+            const response = await fetch(`${API_BASE_URL}/users/me/default-address`, { 
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
             
-            console.log("DEBUG: goToCheckoutBtn - Respuesta de /auth/default-address:", response.status);
-
             if (!response.ok) { 
-                const errorData = await response.json().catch(() => ({ message: 'No se pudo obtener la dirección. Asegúrate de tener una configurada.' })); 
-                console.error("DEBUG: goToCheckoutBtn - Error al obtener dirección:", errorData.message);
-                showToast(errorData.message || 'No tienes una dirección predeterminada. Por favor, configúrala en "Mi Cuenta".', 'error'); 
-                if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">${errorData.message || 'No se encontró dirección predeterminada. Ve a "Mi Cuenta" para añadir una.'}</p>`; 
-                // Opcional: Redirigir al perfil o mostrar opción para añadir dirección
-                // showView('profile'); 
+                let errorMessage = 'No tienes una dirección predeterminada. Por favor, configúrala en "Mi Cuenta".';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Si el cuerpo del error no es JSON, usar mensaje genérico
+                }
+                showToast(errorMessage, 'error'); 
+                if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">${errorMessage}</p>`; 
                 return; 
             }
             
             const address = await response.json();
-            console.log("DEBUG: goToCheckoutBtn - Dirección obtenida:", address);
-
             if (!address || !address.id_direccion) { 
-                console.error("DEBUG: goToCheckoutBtn - Dirección obtenida pero inválida o sin id_direccion.");
                 showToast('No tienes una dirección predeterminada configurada. Por favor, ve a "Mi Cuenta".', 'error');
                 if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">No se encontró dirección predeterminada válida. Ve a "Mi Cuenta" para añadir una.</p>`; 
                 return;
@@ -423,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showView('checkout');
 
         } catch (error) { 
-            console.error("DEBUG: goToCheckoutBtn - Catch error:", error); 
+            console.error("Error al obtener dirección para checkout:", error); 
             showToast('Error al cargar información de envío. Intenta de nuevo.', 'error'); 
             if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">Ocurrió un error al cargar tu dirección.</p>`;
         }
@@ -524,8 +528,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_BASE_URL}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al iniciar sesión');
+            
             saveUserSession(data); 
-            if (currentUser && currentUser.usuario && currentUser.usuario.rol !== 'administrador') {
+
+            if (!(currentUser && currentUser.usuario && currentUser.usuario.rol === 'administrador')) {
                 showToast('Inicio de sesión exitoso.', 'success');
                 if(authModal) authModal.classList.remove('active'); 
             }
@@ -580,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const profileAddressEl = document.getElementById('profileAddress');
         if(profileAddressEl) profileAddressEl.innerHTML = 'Cargando dirección...';
         try {
-            const addrResponse = await fetch(`${API_BASE_URL}/auth/default-address`, { headers: { 'Authorization': `Bearer ${getToken()}` }});
+            const addrResponse = await fetch(`${API_BASE_URL}/users/me/default-address`, { headers: { 'Authorization': `Bearer ${getToken()}` }});
             if(addrResponse.ok) {
                 const addr = await addrResponse.json();
                 if(profileAddressEl && addr && addr.id_direccion) { 
@@ -614,12 +620,76 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.view-complaint-btn').forEach(btn => btn.addEventListener('click', openViewComplaintModal));
         document.querySelectorAll('.view-order-details-btn').forEach(btn => btn.addEventListener('click', (e) => {
             const orderId = e.target.dataset.orderId;
-            showToast(`Cargando detalles del pedido ${orderId}... (Implementación pendiente)`, 'info');
+            openClientOrderDetailModal(orderId); 
         }));
     }
     function getOrderStatusColor(status) { const colors = { 'pendiente_pago': 'text-yellow-600', 'pagado': 'text-green-600', 'en_proceso': 'text-blue-600', 'enviado': 'text-purple-600', 'entregado': 'text-teal-600', 'cancelado': 'text-red-600', 'fallido': 'text-red-700' }; return colors[status] || 'text-gray-600'; }
     function formatOrderStatus(status) { return (status || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()); }
 
+    // --- Detalles del Pedido (Cliente) ---
+    async function openClientOrderDetailModal(orderId) {
+        if (!clientOrderDetailModal || !clientOrderDetailModalContent || !clientOrderDetailModalTitle) {
+            console.error("Elementos del modal de detalle de pedido del cliente no encontrados.");
+            return;
+        }
+        clientOrderDetailModalContent.innerHTML = '<p>Cargando detalles del pedido...</p>';
+        openModal(clientOrderDetailModal);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Error al cargar los detalles del pedido.');
+            }
+            const order = await response.json();
+            
+            clientOrderDetailModalTitle.textContent = `Detalles del Pedido #${order.codigo_pedido}`;
+            
+            let itemsHtml = '<p class="font-semibold mb-1">Productos:</p><ul class="list-disc list-inside pl-4 space-y-1">';
+            if (order.detalles && order.detalles.length > 0) {
+                order.detalles.forEach(item => {
+                    itemsHtml += `<li>${item.cantidad_comprada}x ${item.nombre_producto_historico} (SKU: ${item.sku_historico}) - Bs. ${parseFloat(item.precio_unitario_compra).toFixed(2)} c/u</li>`;
+                });
+            } else {
+                itemsHtml += '<li>No hay productos en este pedido.</li>';
+            }
+            itemsHtml += '</ul>';
+
+            clientOrderDetailModalContent.innerHTML = `
+                <div class="space-y-2">
+                    <p><strong>Fecha del Pedido:</strong> ${new Date(order.fecha_pedido).toLocaleString()}</p>
+                    <p><strong>Estado del Pedido:</strong> <span class="font-medium ${getOrderStatusColor(order.estado_pedido)}">${formatOrderStatus(order.estado_pedido)}</span></p>
+                    <hr class="my-2">
+                    <p class="font-semibold">Dirección de Envío:</p>
+                    <p>${order.nombre_cliente_envio || (currentUser && currentUser.usuario ? currentUser.usuario.nombre_completo : '')}</p>
+                    <p>${order.calle_avenida}, Nro. ${order.numero_vivienda}</p>
+                    <p>Zona: ${order.nombre_zona}</p>
+                    ${order.referencia_adicional ? `<p>Ref: ${order.referencia_adicional}</p>` : ''}
+                    <hr class="my-2">
+                    ${itemsHtml}
+                    <hr class="my-2">
+                    <div class="text-right space-y-1">
+                        <p><strong>Subtotal Productos:</strong> Bs. ${parseFloat(order.subtotal_productos).toFixed(2)}</p>
+                        <p><strong>Costo de Envío:</strong> Bs. ${parseFloat(order.costo_envio).toFixed(2)}</p>
+                        <p class="font-bold text-lg"><strong>Total Pedido:</strong> Bs. ${parseFloat(order.total_pedido).toFixed(2)}</p>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error("Error al abrir detalle de pedido del cliente:", error);
+            clientOrderDetailModalContent.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+        }
+    }
+
+    if(closeClientOrderDetailModalBtn) {
+        closeClientOrderDetailModalBtn.addEventListener('click', () => {
+            if(clientOrderDetailModal) clientOrderDetailModal.classList.remove('active');
+        });
+    }
+
+    // --- Sistema de Quejas (Cliente) ---
     function openComplaintModal(event) {
         const orderId = event.target.dataset.orderId;
         const orderCode = event.target.dataset.orderCode;
@@ -638,12 +708,8 @@ document.addEventListener('DOMContentLoaded', () => {
         closeComplaintModalBtn.addEventListener('click', () => { 
             if (complaintModal) {
                 complaintModal.classList.remove('active');
-            } else {
-                console.error("DEBUG: Modal 'complaintModal' no encontrado al intentar cerrar.");
             }
         });
-    } else {
-        console.error("DEBUG: Botón 'closeComplaintModalBtn' NO encontrado en el DOM.");
     }
 
     if (complaintForm) complaintForm.addEventListener('submit', async (e) => { 
@@ -684,12 +750,8 @@ document.addEventListener('DOMContentLoaded', () => {
         closeViewComplaintModalBtn.addEventListener('click', () => {
             if (viewComplaintModal) {
                 viewComplaintModal.classList.remove('active');
-            } else {
-                console.error("DEBUG: Modal 'viewComplaintModal' no encontrado al intentar cerrar.");
             }
         });
-    } else {
-         console.error("DEBUG: Botón 'closeViewComplaintModalBtn' no encontrado.");
     }
 
     if(mobileMenuBtn) mobileMenuBtn.addEventListener('click', () => { if(mobileMenu) mobileMenu.classList.toggle('hidden'); });

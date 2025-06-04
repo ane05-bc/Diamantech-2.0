@@ -3,7 +3,7 @@ const dbPool = require('../config/db');
 // Obtener todas las categorías activas
 const getAllCategories = async (req, res, next) => {
   try {
-    const [categories] = await dbPool.query('SELECT id_categoria, nombre_categoria, slug_categoria, descripcion_categoria, imagen_url_categoria FROM Categorias WHERE activo = TRUE ORDER BY nombre_categoria');
+    const [categories] = await dbPool.query('SELECT id_categoria, nombre_categoria, slug_categoria, descripcion_categoria, imagen_url_categoria,activo FROM Categorias WHERE activo = TRUE ORDER BY nombre_categoria');
     res.status(200).json(categories);
   } catch (error) {
     next(error);

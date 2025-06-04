@@ -206,6 +206,7 @@
         </div>
     </footer>
 
+    <!-- Modal del Carrito -->
     <div id="cartModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-end z-[60]">
         <div class="cart-modal-content bg-white w-full max-w-md h-full shadow-xl p-6 overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
@@ -224,7 +225,8 @@
         </div>
     </div>
 
-    <div id="authModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[70] p-4">
+    <!-- Modal de Autenticación -->
+    <div id="authModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[70] p-4"> 
         <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-md mx-auto max-h-[90vh] overflow-y-auto">
             <div class="flex justify-end">
                 <button id="closeAuthModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
@@ -258,6 +260,7 @@
         </div>
     </div>
 
+    <!-- Modal para Registrar Queja -->
     <div id="complaintModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[70] p-4">
         <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-blue-700 font-playfair">Registrar Queja</h2><button id="closeComplaintModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button></div>
@@ -269,12 +272,27 @@
         </div>
     </div>
     
+    <!-- Modal para Ver Queja -->
     <div id="viewComplaintModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[70] p-4">
         <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-blue-700 font-playfair">Detalle de Queja</h2><button id="closeViewComplaintModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button></div>
             <div id="viewComplaintDetailsContainer" class="text-sm"><p>Cargando detalles de la queja...</p></div>
         </div>
     </div>
+
+    <!-- Modal para Detalles del Pedido (Cliente) -->
+    <div id="clientOrderDetailModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[70] p-4">
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-auto max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="clientOrderDetailModalTitle" class="text-xl font-bold text-blue-700 font-playfair">Detalles del Pedido</h2>
+                <button id="closeClientOrderDetailModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div id="clientOrderDetailModalContent" class="text-sm">
+                <p>Cargando detalles...</p>
+            </div>
+        </div>
+    </div>
+
 
     <button id="scrollToTopBtn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 hidden z-40"> <i class="fas fa-arrow-up"></i> </button>
     <script src="js/script.js"></script>

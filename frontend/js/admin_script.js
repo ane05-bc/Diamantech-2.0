@@ -6,7 +6,7 @@ let currentEditingCategoryId = null;
 let currentViewingOrderId = null;
 let currentManagingComplaintId = null;
 let adminCategoriesCache = []; 
-let adminProductsCache = []; // Cache para productos
+let adminProductsCache = []; 
 
 document.addEventListener('DOMContentLoaded', () => {
     const adminLoginContainer = document.getElementById('adminLoginContainer');
@@ -68,12 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (adminUserGreeting) adminUserGreeting.textContent = `Admin: ${adminUser.nombre_completo || adminUser.email}`;
                     showAdminSection('orders'); 
                     return;
+                } else {
+                    localStorage.removeItem('diamantechAdminToken');
+                    localStorage.removeItem('diamantechAdminUser');
+                    adminToken = null;
                 }
             } catch (e) {
                 console.error("Error parsing admin user from localStorage", e);
+                localStorage.removeItem('diamantechAdminToken');
+                localStorage.removeItem('diamantechAdminUser');
+                adminToken = null;
             }
         }
-        // Si no hay token, o no es admin, o hay error, mostrar login
         if(adminLoginContainer) adminLoginContainer.classList.remove('hidden');
         if(adminDashboardContainer) adminDashboardContainer.classList.add('hidden');
     }
@@ -84,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = adminLoginForm.email.value;
             const password = adminLoginForm.password.value;
             const submitButton = adminLoginForm.querySelector('button[type="submit"]');
-            if(submitButton) submitButton.disabled = true;
+            if(submitButton) { submitButton.disabled = true; submitButton.textContent = "Ingresando..."; }
 
             try {
                 const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -97,13 +103,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(data.message || 'Acceso denegado. Solo administradores o credenciales incorrectas.');
                 }
                 localStorage.setItem('diamantechAdminToken', data.token);
-                localStorage.setItem('diamantechAdminUser', JSON.stringify(data.usuario)); // Guardar todo el objeto usuario
+                localStorage.setItem('diamantechAdminUser', JSON.stringify(data.usuario)); 
                 adminToken = data.token;
-                checkAdminLogin();
+                checkAdminLogin(); 
             } catch (error) {
                 alert(`Error de login: ${error.message}`);
             } finally {
-                if(submitButton) submitButton.disabled = false;
+                if(submitButton) { submitButton.disabled = false; submitButton.textContent = "Ingresar"; }
             }
         });
     }
@@ -112,8 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
         adminLogoutBtn.addEventListener('click', () => {
             localStorage.removeItem('diamantechAdminToken');
             localStorage.removeItem('diamantechAdminUser');
+            localStorage.removeItem('diamantechUser'); 
             adminToken = null;
-            window.location.href = 'index.html'; // Redirigir a la página principal de clientes
+            window.location.href = 'index.html'; 
         });
     }
 
@@ -151,22 +158,24 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!adminCategoryList) return;
         adminCategoryList.innerHTML = 'Cargando categorías...';
         try {
-            const response = await fetch(`${API_BASE_URL}/products/categories`, { // Endpoint público para categorías
+            // Usar el nuevo endpoint que trae TODAS las categorías para el admin
+            const response = await fetch(`${API_BASE_URL}/admin/categories-all`, { 
                 headers: { 'Authorization': `Bearer ${adminToken}` } 
             });
-            if (!response.ok) throw new Error('Error al cargar categorías');
+            if (!response.ok) throw new Error('Error al cargar categorías para admin: ' + response.statusText);
             const categories = await response.json();
             adminCategoriesCache = categories; 
             renderAdminCategories(categories);
             populateCategorySelect(categories); 
         } catch (error) {
             adminCategoryList.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+            console.error("Error en loadAdminCategories:", error);
         }
     }
 
     function renderAdminCategories(categories) {
         if (!adminCategoryList) return;
-        if (categories.length === 0) {
+        if (!categories || categories.length === 0) {
             adminCategoryList.innerHTML = '<p>No hay categorías creadas.</p>'; return;
         }
         adminCategoryList.innerHTML = `
@@ -179,10 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr></thead>
                 <tbody class="divide-y divide-gray-200">
                 ${categories.map(cat => `
-                    <tr>
+                    <tr class="${!cat.activo ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}">
                         <td class="py-2 px-3 text-sm">${cat.nombre_categoria}</td>
                         <td class="py-2 px-3 text-sm">${cat.slug_categoria}</td>
-                        <td class="py-2 px-3 text-sm">${cat.activo ? 'Sí' : 'No'}</td>
+                        <td class="py-2 px-3 text-sm font-semibold ${!cat.activo ? 'text-red-600' : 'text-green-600'}">${cat.activo ? 'Sí' : 'No'}</td>
                         <td class="py-2 px-3 text-sm">
                             <button class="edit-category-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${cat.id_categoria}"><i class="fas fa-edit"></i></button>
                         </td>
@@ -231,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(result.message || 'Error al guardar categoría');
             alert(result.message);
             if(categoryModal) categoryModal.classList.add('hidden');
-            loadAdminCategories();
+            loadAdminCategories(); 
         } catch (error) {
             alert(`Error: ${error.message}`);
         }
@@ -249,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
             categoryForm.slug_categoria.value = category.slug_categoria;
             categoryForm.descripcion_categoria.value = category.descripcion_categoria || '';
             categoryForm.imagen_url_categoria.value = category.imagen_url_categoria || '';
-            categoryForm.activo.checked = category.activo;
+            categoryForm.activo.checked = !!category.activo; 
         }
         if(categoryModal) {
             categoryModal.classList.remove('hidden');
@@ -261,24 +270,30 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadAdminProducts() {
         if (!adminProductList) return;
         adminProductList.innerHTML = 'Cargando productos...';
-        // Primero cargar categorías para el select del formulario de producto
-        await loadAdminCategories(); 
+        
+        if (adminCategoriesCache.length === 0) { 
+            await loadAdminCategories(); 
+        } else {
+            populateCategorySelect(adminCategoriesCache); 
+        }
+
         try {
             const response = await fetch(`${API_BASE_URL}/admin/products-all`, { 
                  headers: { 'Authorization': `Bearer ${adminToken}` }
             });
-            if (!response.ok) throw new Error('Error al cargar productos');
+            if (!response.ok) throw new Error('Error al cargar productos: ' + response.statusText);
             const products = await response.json();
-            adminProductsCache = products; // Guardar en caché
+            adminProductsCache = products; 
             renderAdminProducts(products);
         } catch (error) {
             adminProductList.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+            console.error("Error en loadAdminProducts:", error);
         }
     }
 
     function renderAdminProducts(products) {
         if (!adminProductList) return;
-        if (products.length === 0) {
+        if (!products || products.length === 0) {
             adminProductList.innerHTML = '<p>No hay productos creados.</p>'; return;
         }
         adminProductList.innerHTML = `
@@ -293,12 +308,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr></thead>
                 <tbody class="divide-y divide-gray-200">
                 ${products.map(p => `
-                    <tr>
+                    <tr class="${!p.activo ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}">
                         <td class="py-2 px-3 text-sm">${p.nombre_producto}</td>
                         <td class="py-2 px-3 text-sm">${p.sku}</td>
                         <td class="py-2 px-3 text-sm">Bs. ${parseFloat(p.precio).toFixed(2)}</td>
                         <td class="py-2 px-3 text-sm">${p.stock}</td>
-                        <td class="py-2 px-3 text-sm">${p.activo ? 'Sí' : 'No'}</td>
+                        <td class="py-2 px-3 text-sm font-semibold ${!p.activo ? 'text-red-600' : 'text-green-600'}">${p.activo ? 'Sí' : 'No'}</td>
                         <td class="py-2 px-3 text-sm">
                             <button class="edit-product-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${p.id_producto}"><i class="fas fa-edit"></i></button>
                         </td>
@@ -311,16 +326,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function populateCategorySelect(categories) {
-        if (!productCategorySelect) return;
+        if (!productCategorySelect) { console.error("Select de categoría (#productCategory) no encontrado en el DOM."); return; }
         productCategorySelect.innerHTML = '<option value="">Seleccione categoría...</option>';
-        categories.forEach(cat => {
-            if (cat.activo) { 
+        if (categories && categories.length > 0) {
+            categories.forEach(cat => {
+                // Mostrar todas las categorías (activas e inactivas) para que el admin pueda verlas,
+                // pero podría ser preferible solo mostrar activas para asignar a un producto nuevo/editado.
+                // Si se desea solo activas: if (cat.activo) { ... }
                 const option = document.createElement('option');
                 option.value = cat.id_categoria;
-                option.textContent = cat.nombre_categoria;
+                option.textContent = `${cat.nombre_categoria} ${!cat.activo ? '(Inactiva)' : ''}`;
                 productCategorySelect.appendChild(option);
-            }
-        });
+            });
+        } else {
+            console.warn("No hay categorías para poblar el select o adminCategoriesCache está vacío.");
+            productCategorySelect.innerHTML = '<option value="">No hay categorías disponibles</option>';
+        }
     }
 
     if(showAddProductModalBtn) showAddProductModalBtn.addEventListener('click', () => {
@@ -329,7 +350,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if(productForm) productForm.reset();
         const activoCheckbox = document.getElementById('productActivo');
         if(activoCheckbox) activoCheckbox.checked = true;
-        populateCategorySelect(adminCategoriesCache); // Asegurar que el select esté poblado
+        
+        if(adminCategoriesCache.length > 0){
+            populateCategorySelect(adminCategoriesCache);
+        } else {
+            loadAdminCategories().then(() => populateCategorySelect(adminCategoriesCache));
+        }
+
         if(productModal) {
             productModal.classList.remove('hidden');
             productModal.classList.add('flex');
@@ -340,21 +367,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if(productForm) productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = {
-            nombre_producto: productForm.nombre_producto.value,
-            slug_producto: productForm.slug_producto.value,
-            id_categoria: productForm.id_categoria.value,
-            precio: parseFloat(productForm.precio.value),
-            stock: parseInt(productForm.stock.value),
-            sku: productForm.sku.value,
-            descripcion_corta: productForm.descripcion_corta.value,
-            descripcion_larga: productForm.descripcion_larga.value,
-            imagen_principal_url: productForm.imagen_principal_url.value,
-            galeria_imagenes_urls: productForm.galeria_imagenes_urls.value, 
-            materiales: productForm.materiales.value,
-            peso_gramos: productForm.peso_gramos.value ? parseFloat(productForm.peso_gramos.value) : null,
-            dimensiones: productForm.dimensiones.value,
-            activo: productForm.activo.checked,
+            nombre_producto: productForm.nombre_producto ? productForm.nombre_producto.value : '',
+            slug_producto: productForm.slug_producto ? productForm.slug_producto.value : '',
+            id_categoria: productForm.id_categoria ? productForm.id_categoria.value : '',
+            precio: productForm.precio ? parseFloat(productForm.precio.value) : 0,
+            stock: productForm.stock ? parseInt(productForm.stock.value) : 0,
+            sku: productForm.sku ? productForm.sku.value : '',
+            descripcion_corta: productForm.descripcion_corta ? productForm.descripcion_corta.value : '',
+            descripcion_larga: productForm.descripcion_larga ? productForm.descripcion_larga.value : '',
+            imagen_principal_url: productForm.imagen_principal_url ? productForm.imagen_principal_url.value : '',
+            galeria_imagenes_urls: productForm.galeria_imagenes_urls ? productForm.galeria_imagenes_urls.value : '[]', 
+            materiales: productForm.materiales ? productForm.materiales.value : '',
+            peso_gramos: productForm.peso_gramos && productForm.peso_gramos.value ? parseFloat(productForm.peso_gramos.value) : null,
+            dimensiones: productForm.dimensiones ? productForm.dimensiones.value : '',
+            activo: productForm.activo ? productForm.activo.checked : true,
         };
+
         const url = currentEditingProductId 
             ? `${API_BASE_URL}/admin/products/${currentEditingProductId}` 
             : `${API_BASE_URL}/admin/products`;
@@ -378,39 +406,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function openEditProductModal(event) {
         const productId = event.currentTarget.dataset.id;
-        // Usar el caché si es posible, o hacer fetch si no está en caché (mejor hacer fetch para datos frescos)
         try {
             const response = await fetch(`${API_BASE_URL}/admin/products/${productId}`, { 
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
-            if (!response.ok) throw new Error('Error al cargar datos del producto para editar');
+            if (!response.ok) throw new Error('Error al cargar datos del producto para editar: ' + response.statusText);
             const product = await response.json();
 
             currentEditingProductId = productId;
             if(productModalTitle) productModalTitle.textContent = 'Editar Producto';
+            
             if(productForm) {
-                productForm.nombre_producto.value = product.nombre_producto || '';
-                productForm.slug_producto.value = product.slug_producto || '';
-                populateCategorySelect(adminCategoriesCache); // Poblar antes de setear valor
-                productForm.id_categoria.value = product.id_categoria || '';
-                productForm.precio.value = product.precio || '';
-                productForm.stock.value = product.stock || 0;
-                productForm.sku.value = product.sku || '';
-                productForm.descripcion_corta.value = product.descripcion_corta || '';
-                productForm.descripcion_larga.value = product.descripcion_larga || '';
-                productForm.imagen_principal_url.value = product.imagen_principal_url || '';
-                productForm.galeria_imagenes_urls.value = product.galeria_imagenes_urls && Array.isArray(product.galeria_imagenes_urls) ? JSON.stringify(product.galeria_imagenes_urls) : '[]';
-                productForm.materiales.value = product.materiales || '';
-                productForm.peso_gramos.value = product.peso_gramos || '';
-                productForm.dimensiones.value = product.dimensiones || '';
-                productForm.activo.checked = product.activo;
+                if(adminCategoriesCache.length > 0){
+                    populateCategorySelect(adminCategoriesCache);
+                } else {
+                    await loadAdminCategories(); 
+                    populateCategorySelect(adminCategoriesCache);
+                }
+
+                // Verificar cada campo antes de asignar
+                const fields = ['nombre_producto', 'slug_producto', 'id_categoria', 'precio', 'stock', 'sku', 'descripcion_corta', 'descripcion_larga', 'imagen_principal_url', 'materiales', 'peso_gramos', 'dimensiones'];
+                fields.forEach(fieldKey => {
+                    if (productForm[fieldKey]) {
+                        productForm[fieldKey].value = product[fieldKey] || (fieldKey === 'stock' ? 0 : '');
+                    } else {
+                        console.warn(`Campo de formulario '${fieldKey}' no encontrado en productForm.`);
+                    }
+                });
+                
+                if(productForm.galeria_imagenes_urls) productForm.galeria_imagenes_urls.value = product.galeria_imagenes_urls && Array.isArray(product.galeria_imagenes_urls) ? JSON.stringify(product.galeria_imagenes_urls) : '[]';
+                if(productForm.activo) productForm.activo.checked = product.activo;
+
+            } else {
+                console.error("El formulario de producto (productForm) no se encontró.");
             }
+
             if(productModal) {
                 productModal.classList.remove('hidden');
                 productModal.classList.add('flex');
             }
         } catch (error) {
-            alert(`Error: ${error.message}`);
+            alert(`Error al abrir modal de edición: ${error.message}`);
+            console.error("Error en openEditProductModal:", error);
         }
     }
 
@@ -442,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAdminOrders(orders) {
         if (!adminOrderList) return;
-        if (orders.length === 0) {
+        if (!orders || orders.length === 0) {
             adminOrderList.innerHTML = '<p>No hay pedidos que coincidan con los filtros.</p>'; return;
         }
         adminOrderList.innerHTML = `
@@ -492,7 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
             adminOrderDetailModal.classList.add('flex');
         }
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/orders/${currentViewingOrderId}`, { // Usa el endpoint de admin/orders/:orderId que definimos en adminRoutes
+            const response = await fetch(`${API_BASE_URL}/admin/orders/${currentViewingOrderId}`, { 
                 headers: { 'Authorization': `Bearer ${adminToken}` }
             });
             if (!response.ok) throw new Error('Error al cargar detalles del pedido');
@@ -585,7 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             deliveryText += `\nTotal a Cobrar (si aplica, verificar estado de pago): Bs. ${parseFloat(order.total_pedido).toFixed(2)}\n`;
             deliveryText += `Estado del Pedido: ${formatAdminOrderStatus(order.estado_pedido)}\n`;
-            if (order.notas_cliente) deliveryText += `\nNotas del Cliente: ${order.notas_cliente}\n`; // Asumiendo que tienes notas_cliente en Pedidos
+            if (order.notas_cliente) deliveryText += `\nNotas del Cliente: ${order.notas_cliente}\n`; 
             deliveryText += `---------------------------------`;
 
             const blob = new Blob([deliveryText], { type: 'text/plain;charset=utf-8' });
@@ -626,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAdminComplaints(complaints) {
          if (!adminComplaintList) return;
-         if (complaints.length === 0) {
+         if (!complaints || complaints.length === 0) {
             adminComplaintList.innerHTML = '<p>No hay quejas que coincidan con los filtros.</p>'; return;
         }
         adminComplaintList.innerHTML = `
@@ -682,11 +719,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p class="mt-2"><strong>Descripción de la Queja:</strong></p>
                 <p class="bg-gray-100 p-2 rounded">${complaint.descripcion_queja}</p>
             `;
-            document.getElementById('adminEditComplaintId').value = complaint.id_queja;
-            if (complaint.respuesta_admin) {
-                document.getElementById('adminComplaintResponseText').value = complaint.respuesta_admin;
+            const editComplaintIdEl = document.getElementById('adminEditComplaintId');
+            const responseTextEl = document.getElementById('adminComplaintResponseText');
+            const newStatusEl = document.getElementById('adminComplaintNewStatus');
+
+            if(editComplaintIdEl) editComplaintIdEl.value = complaint.id_queja;
+            if (responseTextEl && complaint.respuesta_admin) {
+                responseTextEl.value = complaint.respuesta_admin;
             }
-            document.getElementById('adminComplaintNewStatus').value = complaint.estado_queja; 
+            if(newStatusEl) newStatusEl.value = complaint.estado_queja; 
 
         } catch (error) {
             adminComplaintDetailContent.innerHTML = `<p class="text-red-500">${error.message}</p>`;

@@ -7,7 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="css/admin_style.css"> </head>
+    <link rel="stylesheet" href="css/admin_style.css"> 
+</head>
 <body class="bg-gray-200 font-poppins">
     <div id="adminLoginContainer" class="min-h-screen flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
@@ -50,7 +51,7 @@
             <section id="adminProductsSection" class="admin-section hidden">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gestión de Productos</h2>
                 <button id="showAddProductModalBtn" class="mb-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Añadir Producto</button>
-                <div id="adminProductList" class="bg-white p-4 rounded shadow">Cargando productos...</div>
+                <div id="adminProductList" class="bg-white p-4 rounded shadow overflow-x-auto">Cargando productos...</div>
             </section>
 
             <section id="adminOrdersSection" class="admin-section hidden">
@@ -68,7 +69,7 @@
                     </select>
                     <button id="applyOrderFiltersBtn" class="bg-blue-500 text-white px-3 py-1 rounded">Filtrar</button>
                 </div>
-                <div id="adminOrderList" class="bg-white p-4 rounded shadow">Cargando pedidos...</div>
+                <div id="adminOrderList" class="bg-white p-4 rounded shadow overflow-x-auto">Cargando pedidos...</div>
             </section>
 
             <section id="adminComplaintsSection" class="admin-section hidden">
@@ -82,39 +83,41 @@
                         <option value="cerrada_admin">Cerrada</option>
                  </select>
                  <button id="applyComplaintFiltersBtn" class="bg-blue-500 text-white px-3 py-1 rounded mb-4">Filtrar Quejas</button>
-                <div id="adminComplaintList" class="bg-white p-4 rounded shadow">Cargando quejas...</div>
+                <div id="adminComplaintList" class="bg-white p-4 rounded shadow overflow-x-auto">Cargando quejas...</div>
             </section>
             
             <section id="adminCategoriesSection" class="admin-section hidden">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gestión de Categorías</h2>
                 <button id="showAddCategoryModalBtn" class="mb-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Añadir Categoría</button>
-                <div id="adminCategoryList" class="bg-white p-4 rounded shadow">Cargando categorías...</div>
+                <div id="adminCategoryList" class="bg-white p-4 rounded shadow overflow-x-auto">Cargando categorías...</div>
             </section>
-
         </main>
     </div>
 
-    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden">
+    <!-- Modal para Añadir/Editar Producto -->
+    <div id="productModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden"> <!-- Asegúrate que 'hidden' esté por defecto -->
         <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-2xl mx-4 my-8 overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center mb-6">
                 <h2 id="productModalTitle" class="text-xl font-bold text-blue-700">Añadir Producto</h2>
                 <button id="closeProductModalBtn" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
             </div>
-            <form id="productForm" class="space-y-4">
+            <form id="productForm" class="space-y-3">
                 <input type="hidden" id="editProductId" name="productId">
-                <div><label for="productName" class="block text-sm font-medium">Nombre</label><input type="text" id="productName" name="nombre_producto" class="mt-1 w-full p-2 border rounded" required></div>
-                <div><label for="productSlug" class="block text-sm font-medium">Slug</label><input type="text" id="productSlug" name="slug_producto" class="mt-1 w-full p-2 border rounded" required></div>
-                <div><label for="productCategory" class="block text-sm font-medium">Categoría</label><select id="productCategory" name="id_categoria" class="mt-1 w-full p-2 border rounded bg-white" required></select></div>
-                <div><label for="productPrice" class="block text-sm font-medium">Precio (Bs.)</label><input type="number" id="productPrice" name="precio" step="0.01" class="mt-1 w-full p-2 border rounded" required></div>
-                <div><label for="productStock" class="block text-sm font-medium">Stock</label><input type="number" id="productStock" name="stock" class="mt-1 w-full p-2 border rounded" required></div>
-                <div><label for="productSku" class="block text-sm font-medium">SKU</label><input type="text" id="productSku" name="sku" class="mt-1 w-full p-2 border rounded" required></div>
-                <div><label for="productDescCorta" class="block text-sm font-medium">Descripción Corta</label><textarea id="productDescCorta" name="descripcion_corta" rows="2" class="mt-1 w-full p-2 border rounded"></textarea></div>
-                <div><label for="productDescLarga" class="block text-sm font-medium">Descripción Larga</label><textarea id="productDescLarga" name="descripcion_larga" rows="4" class="mt-1 w-full p-2 border rounded"></textarea></div>
-                <div><label for="productImagePrincipal" class="block text-sm font-medium">URL Imagen Principal</label><input type="url" id="productImagePrincipal" name="imagen_principal_url" class="mt-1 w-full p-2 border rounded"></div>
-                <div><label for="productImageGaleria" class="block text-sm font-medium">URLs Galería (JSON Array, ej: ["url1", "url2"])</label><input type="text" id="productImageGaleria" name="galeria_imagenes_urls" class="mt-1 w-full p-2 border rounded"></div>
-                <div><label for="productMateriales" class="block text-sm font-medium">Materiales</label><input type="text" id="productMateriales" name="materiales" class="mt-1 w-full p-2 border rounded"></div>
-                <div class="flex items-center"><input type="checkbox" id="productActivo" name="activo" class="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" checked><label for="productActivo" class="text-sm font-medium">Activo</label></div>
-                <button type="submit" id="saveProductBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Guardar Producto</button>
+                <div><label for="productName" class="block text-sm font-medium">Nombre del Producto</label><input type="text" id="productName" name="nombre_producto" class="mt-1 w-full p-2 border rounded-md" required></div>
+                <div><label for="productSlug" class="block text-sm font-medium">Slug</label><input type="text" id="productSlug" name="slug_producto" class="mt-1 w-full p-2 border rounded-md" required></div>
+                <div><label for="productCategory" class="block text-sm font-medium">Categoría</label><select id="productCategory" name="id_categoria" class="mt-1 w-full p-2 border rounded-md bg-white" required><option value="">Cargando categorías...</option></select></div>
+                <div><label for="productPrice" class="block text-sm font-medium">Precio (Bs.)</label><input type="number" id="productPrice" name="precio" step="0.01" class="mt-1 w-full p-2 border rounded-md" required></div>
+                <div><label for="productStock" class="block text-sm font-medium">Stock</label><input type="number" id="productStock" name="stock" class="mt-1 w-full p-2 border rounded-md" required min="0"></div>
+                <div><label for="productSku" class="block text-sm font-medium">SKU</label><input type="text" id="productSku" name="sku" class="mt-1 w-full p-2 border rounded-md" required></div>
+                <div><label for="productDescCorta" class="block text-sm font-medium">Descripción Corta</label><textarea id="productDescCorta" name="descripcion_corta" rows="2" class="mt-1 w-full p-2 border rounded-md"></textarea></div>
+                <div><label for="productDescLarga" class="block text-sm font-medium">Descripción Larga</label><textarea id="productDescLarga" name="descripcion_larga" rows="3" class="mt-1 w-full p-2 border rounded-md"></textarea></div>
+                <div><label for="productImagePrincipal" class="block text-sm font-medium">URL Imagen Principal</label><input type="text" id="productImagePrincipal" name="imagen_principal_url" placeholder="Ej: img/productos/nombre.jpg" class="mt-1 w-full p-2 border rounded-md"></div>
+                <div><label for="productImageGaleria" class="block text-sm font-medium">URLs Galería (JSON Array)</label><input type="text" id="productImageGaleria" name="galeria_imagenes_urls" placeholder='Ej: ["img/prod/g1.jpg", "img/prod/g2.jpg"]' class="mt-1 w-full p-2 border rounded-md"></div>
+                <div><label for="productMateriales" class="block text-sm font-medium">Materiales</label><input type="text" id="productMateriales" name="materiales" class="mt-1 w-full p-2 border rounded-md"></div>
+                <div><label for="productPeso" class="block text-sm font-medium">Peso (gramos)</label><input type="number" id="productPeso" name="peso_gramos" step="0.01" class="mt-1 w-full p-2 border rounded-md"></div>
+                <div><label for="productDimensiones" class="block text-sm font-medium">Dimensiones</label><input type="text" id="productDimensiones" name="dimensiones" class="mt-1 w-full p-2 border rounded-md"></div>
+                <div class="flex items-center pt-2"><input type="checkbox" id="productActivo" name="activo" class="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" checked><label for="productActivo" class="text-sm font-medium">Producto Activo</label></div>
+                <button type="submit" id="saveProductBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 mt-2">Guardar Producto</button>
             </form>
         </div>
     </div>
@@ -127,7 +130,7 @@
             </div>
             <div id="adminOrderDetailContent" class="text-sm">Cargando detalles...</div>
             <div class="mt-4">
-                <label for="adminUpdateOrderStatus" class="block text-sm font-medium">Actualizar Estado:</label>
+                <label for="adminUpdateOrderStatusSelect" class="block text-sm font-medium">Actualizar Estado:</label>
                 <select id="adminUpdateOrderStatusSelect" class="p-2 border rounded bg-white mr-2">
                      <option value="pendiente_pago">Pendiente Pago</option>
                      <option value="pagado">Pagado</option>
@@ -155,11 +158,11 @@
                 <input type="hidden" id="adminEditComplaintId">
                 <div>
                     <label for="adminComplaintResponseText" class="block text-sm font-medium">Respuesta del Administrador:</label>
-                    <textarea id="adminComplaintResponseText" name="respuesta_admin" rows="4" class="mt-1 w-full p-2 border rounded" required></textarea>
+                    <textarea id="adminComplaintResponseText" name="respuesta_admin" rows="4" class="mt-1 w-full p-2 border rounded-md" required></textarea>
                 </div>
                 <div class="mt-2">
                     <label for="adminComplaintNewStatus" class="block text-sm font-medium">Nuevo Estado de la Queja:</label>
-                    <select id="adminComplaintNewStatus" name="nuevo_estado_queja" class="mt-1 w-full p-2 border rounded bg-white" required>
+                    <select id="adminComplaintNewStatus" name="nuevo_estado_queja" class="mt-1 w-full p-2 border rounded-md bg-white" required>
                         <option value="en_proceso_admin">En Proceso (Admin)</option>
                         <option value="resuelta_favorable_cliente">Resuelta Favorable al Cliente</option>
                         <option value="resuelta_desfavorable_cliente">Resuelta Desfavorable al Cliente</option>
@@ -171,7 +174,7 @@
         </div>
     </div>
     
-    <div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden">
+    <div id="categoryModal" class="fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-[80] hidden"> <!-- Asegúrate que 'hidden' esté por defecto -->
         <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-lg mx-4 my-8">
             <div class="flex justify-between items-center mb-6">
                 <h2 id="categoryModalTitle" class="text-xl font-bold text-blue-700">Añadir Categoría</h2>
@@ -179,16 +182,15 @@
             </div>
             <form id="categoryForm" class="space-y-4">
                 <input type="hidden" id="editCategoryId" name="categoryId">
-                <div><label for="categoryName" class="block text-sm font-medium">Nombre</label><input type="text" id="categoryName" name="nombre_categoria" class="mt-1 w-full p-2 border rounded" required></div>
-                <div><label for="categorySlug" class="block text-sm font-medium">Slug</label><input type="text" id="categorySlug" name="slug_categoria" class="mt-1 w-full p-2 border rounded" required></div>
-                <div><label for="categoryDescription" class="block text-sm font-medium">Descripción</label><textarea id="categoryDescription" name="descripcion_categoria" rows="3" class="mt-1 w-full p-2 border rounded"></textarea></div>
-                <div><label for="categoryImageUrl" class="block text-sm font-medium">URL Imagen</label><input type="url" id="categoryImageUrl" name="imagen_url_categoria" class="mt-1 w-full p-2 border rounded"></div>
-                <div class="flex items-center"><input type="checkbox" id="categoryActivo" name="activo" class="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" checked><label for="categoryActivo" class="text-sm font-medium">Activa</label></div>
-                <button type="submit" id="saveCategoryBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Guardar Categoría</button>
+                <div><label for="categoryName" class="block text-sm font-medium">Nombre</label><input type="text" id="categoryName" name="nombre_categoria" class="mt-1 w-full p-2 border rounded-md" required></div>
+                <div><label for="categorySlug" class="block text-sm font-medium">Slug</label><input type="text" id="categorySlug" name="slug_categoria" class="mt-1 w-full p-2 border rounded-md" required></div>
+                <div><label for="categoryDescription" class="block text-sm font-medium">Descripción</label><textarea id="categoryDescription" name="descripcion_categoria" rows="3" class="mt-1 w-full p-2 border rounded-md"></textarea></div>
+                <div><label for="categoryImageUrl" class="block text-sm font-medium">URL Imagen</label><input type="text" id="categoryImageUrl" name="imagen_url_categoria" placeholder="Ej: img/categorias/nombre.jpg" class="mt-1 w-full p-2 border rounded-md"></div>
+                <div class="flex items-center pt-2"><input type="checkbox" id="categoryActivo" name="activo" class="h-4 w-4 text-blue-600 border-gray-300 rounded mr-2" checked><label for="categoryActivo" class="text-sm font-medium">Categoría Activa</label></div>
+                <button type="submit" id="saveCategoryBtn" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 mt-2">Guardar Categoría</button>
             </form>
         </div>
     </div>
-
 
     <script src="js/admin_script.js"></script>
 </body>
