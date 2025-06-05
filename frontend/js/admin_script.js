@@ -6,8 +6,8 @@ let currentEditingCategoryId = null;
 let currentViewingOrderId = null;
 let currentManagingComplaintId = null;
 let adminCategoriesCache = []; 
-let adminProductsCache = []; 
-let lowStockProductsCache = [];
+let adminProductsCache = [];
+let lowStockProductsCache = []; 
 
 document.addEventListener('DOMContentLoaded', () => {
     const adminLoginContainer = document.getElementById('adminLoginContainer');
@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadRestockReportBtn = document.getElementById('downloadRestockReportBtn');
     const lowStockAlertCountBadge = document.getElementById('lowStockAlertCountBadge');
 
+
     // --- Autenticación Admin ---
     function checkAdminLogin() {
         adminToken = localStorage.getItem('diamantechAdminToken');
@@ -72,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(adminDashboardContainer) adminDashboardContainer.classList.remove('hidden');
                     if (adminUserGreeting) adminUserGreeting.textContent = `Admin: ${adminUser.nombre_completo || adminUser.email}`;
                     showAdminSection('orders'); 
-                    loadLowStockAlerts();
+                    loadLowStockAlerts(); 
                     return;
                 } else {
                     localStorage.removeItem('diamantechAdminToken');
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sectionId === 'orders') loadAdminOrders();
         if (sectionId === 'complaints') loadAdminComplaints();
         if (sectionId === 'categories') loadAdminCategories();
-        if (sectionId === 'stockAlerts') loadLowStockAlerts();
+        if (sectionId === 'stockAlerts') loadLowStockAlerts(); 
     }
 
     adminNavBtns.forEach(btn => {
@@ -318,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="py-2 px-3 text-sm">${p.nombre_producto}</td>
                         <td class="py-2 px-3 text-sm">${p.sku}</td>
                         <td class="py-2 px-3 text-sm">Bs. ${parseFloat(p.precio).toFixed(2)}</td>
-                        <td class="py-2 px-3 text-sm">${p.stock}</td>
+                        <td class="py-2 px-3 text-sm ${p.stock <= 5 && p.stock > 0 ? 'text-orange-600 font-bold' : (p.stock === 0 ? 'text-red-600 font-bold' : '')}">${p.stock}</td>
                         <td class="py-2 px-3 text-sm font-semibold ${!p.activo ? 'text-red-600' : 'text-green-600'}">${p.activo ? 'Sí' : 'No'}</td>
                         <td class="py-2 px-3 text-sm">
                             <button class="edit-product-btn text-blue-600 hover:text-blue-800 mr-2" data-id="${p.id_producto}"><i class="fas fa-edit"></i></button>
@@ -402,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(result.message);
             if(productModal) productModal.classList.add('hidden');
             loadAdminProducts();
-            loadLowStockAlerts();
+            loadLowStockAlerts(); 
         } catch (error) {
             alert(`Error: ${error.message}`);
         }
@@ -427,16 +428,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     await loadAdminCategories(); 
                     populateCategorySelect(adminCategoriesCache);
                 }
+                
+                const fields = {
+                    nombre_producto: product.nombre_producto || '',
+                    slug_producto: product.slug_producto || '',
+                    id_categoria: product.id_categoria || '',
+                    precio: product.precio || '',
+                    stock: product.stock === undefined ? 0 : product.stock,
+                    sku: product.sku || '',
+                    descripcion_corta: product.descripcion_corta || '',
+                    descripcion_larga: product.descripcion_larga || '',
+                    imagen_principal_url: product.imagen_principal_url || '',
+                    materiales: product.materiales || '',
+                    peso_gramos: product.peso_gramos || '',
+                    dimensiones: product.dimensiones || ''
+                };
 
-                // Verificar cada campo antes de asignar
-                const fields = ['nombre_producto', 'slug_producto', 'id_categoria', 'precio', 'stock', 'sku', 'descripcion_corta', 'descripcion_larga', 'imagen_principal_url', 'materiales', 'peso_gramos', 'dimensiones'];
-                fields.forEach(fieldKey => {
-                    if (productForm[fieldKey]) {
-                        productForm[fieldKey].value = product[fieldKey] || (fieldKey === 'stock' ? 0 : '');
+                for (const key in fields) {
+                    if (productForm[key]) {
+                        productForm[key].value = fields[key];
                     } else {
-                        console.warn(`Campo de formulario '${fieldKey}' no encontrado en productForm.`);
+                         console.warn(`Campo de formulario '${key}' no encontrado en productForm durante la edición.`);
                     }
-                });
+                }
                 
                 if(productForm.galeria_imagenes_urls) productForm.galeria_imagenes_urls.value = product.galeria_imagenes_urls && Array.isArray(product.galeria_imagenes_urls) ? JSON.stringify(product.galeria_imagenes_urls) : '[]';
                 if(productForm.activo) productForm.activo.checked = product.activo;
@@ -454,9 +468,13 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error en openEditProductModal:", error);
         }
     }
+
     // --- Alertas de Stock Bajo (Admin) ---
     async function loadLowStockAlerts() {
-        if (!adminLowStockList || !lowStockAlertCountBadge) return;
+        if (!adminLowStockList || !lowStockAlertCountBadge) {
+            console.warn("Elementos para alertas de stock no encontrados en el DOM.");
+            return;
+        }
         adminLowStockList.innerHTML = 'Cargando alertas de stock...';
         try {
             const response = await fetch(`${API_BASE_URL}/admin/products/low-stock`, {
@@ -470,12 +488,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 lowStockAlertCountBadge.textContent = lowStockProductsCache.length;
                 lowStockAlertCountBadge.classList.remove('hidden');
             } else {
-                lowStockAlertCountBadge.classList.add('hidden');
+                lowStockAlertCountBadge.textContent = '0'; // Mostrar 0 si no hay
+                lowStockAlertCountBadge.classList.add('hidden'); // O ocultarlo si es 0
             }
 
         } catch (error) {
             adminLowStockList.innerHTML = `<p class="text-red-500">${error.message}</p>`;
             console.error("Error en loadLowStockAlerts:", error);
+             if (lowStockAlertCountBadge) lowStockAlertCountBadge.classList.add('hidden');
         }
     }
 
@@ -483,12 +503,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!adminLowStockList) return;
         if (!products || products.length === 0) {
             adminLowStockList.innerHTML = '<p>No hay productos con stock bajo en este momento.</p>';
-            if(downloadRestockReportBtn) downloadRestockReportBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            if(downloadRestockReportBtn) downloadRestockReportBtn.disabled = true;
+            if(downloadRestockReportBtn) {
+                downloadRestockReportBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                downloadRestockReportBtn.disabled = true;
+            }
             return;
         }
-        if(downloadRestockReportBtn) downloadRestockReportBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        if(downloadRestockReportBtn) downloadRestockReportBtn.disabled = false;
+        if(downloadRestockReportBtn) {
+            downloadRestockReportBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            downloadRestockReportBtn.disabled = false;
+        }
 
         adminLowStockList.innerHTML = `
             <table class="min-w-full bg-white">
@@ -543,6 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
             URL.revokeObjectURL(link.href);
         });
     }
+
     // --- Gestión de Pedidos (Admin) ---
     async function loadAdminOrders(filters = {}) {
         if (!adminOrderList) return;
