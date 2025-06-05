@@ -1,8 +1,9 @@
     const express = require('express');
     const {
-      createCategory, updateCategory, getAllCategoriesAdmin, // getAllCategoriesAdmin es nueva
+      createCategory, updateCategory, getAllCategoriesAdmin, 
       createProduct, updateProduct,
       getAllProductsAdmin, getProductDetailsAdmin, 
+      getLowStockProducts,
       getAllOrdersAdmin, updateOrderStatusAdmin, 
       getAllComplaintsAdmin, getComplaintDetailsAdmin, respondToComplaintAdmin
     } = require('../controllers/adminController');
@@ -25,6 +26,9 @@
     router.put('/products/:productId', updateProduct);
     router.get('/products-all', getAllProductsAdmin); 
     router.get('/products/:productId', getProductDetailsAdmin); 
+
+    // Alertas de Stock
+    router.get('/products/low-stock', getLowStockProducts);
 
     // Pedidos
     router.get('/orders', getAllOrdersAdmin);

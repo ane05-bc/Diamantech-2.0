@@ -264,11 +264,27 @@
             res.status(200).json({ message: 'Respuesta a la queja enviada y estado actualizado.' });
         } catch (error) { next(error); }
     };
+    const getLowStockProducts = async (req, res, next) => {
+        const stockLimit = 5; 
+        try {
+            const [products] = await dbPool.query(
+                `SELECT id_producto, nombre_producto, sku, stock, imagen_principal_url 
+                FROM Productos
+                WHERE stock <= ? AND stock > 0 AND activo = TRUE
+                ORDER BY stock ASC, nombre_producto ASC`,
+                [stockLimit]
+            );
+            res.status(200).json(products);
+        } catch (error) {
+            next(error);
+        }
+    };
 
     module.exports = {
-      createCategory, updateCategory, getAllCategoriesAdmin, // getAllCategoriesAdmin es nueva
+      createCategory, updateCategory, getAllCategoriesAdmin, 
       createProduct, updateProduct,
       getAllProductsAdmin, getProductDetailsAdmin,
+      getLowStockProducts,
       getAllOrdersAdmin, updateOrderStatusAdmin,
       getAllComplaintsAdmin, getComplaintDetailsAdmin, respondToComplaintAdmin,
     };

@@ -399,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-gray-500">Verificando dirección...</p>`;
         try {
-            const response = await fetch(`${API_BASE_URL}/users/me/default-address`, { 
+            const response = await fetch(`${API_BASE_URL}/auth/default-address`, { 
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
             
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const errorData = await response.json();
                     errorMessage = errorData.message || errorMessage;
                 } catch (e) {
-                    // Si el cuerpo del error no es JSON, usar mensaje genérico
+                    
                 }
                 showToast(errorMessage, 'error'); 
                 if (checkoutAddressInfo) checkoutAddressInfo.innerHTML = `<p class="text-red-500">${errorMessage}</p>`; 
@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const profileAddressEl = document.getElementById('profileAddress');
         if(profileAddressEl) profileAddressEl.innerHTML = 'Cargando dirección...';
         try {
-            const addrResponse = await fetch(`${API_BASE_URL}/users/me/default-address`, { headers: { 'Authorization': `Bearer ${getToken()}` }});
+            const addrResponse = await fetch(`${API_BASE_URL}/auth/default-address`, { headers: { 'Authorization': `Bearer ${getToken()}` }});
             if(addrResponse.ok) {
                 const addr = await addrResponse.json();
                 if(profileAddressEl && addr && addr.id_direccion) { 

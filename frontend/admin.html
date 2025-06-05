@@ -44,6 +44,10 @@
                 <button data-section="orders" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium">Pedidos</button>
                 <button data-section="complaints" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium">Quejas</button>
                 <button data-section="categories" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium">Categorías</button>
+                <button data-section="stockAlerts" class="admin-nav-btn px-3 py-2 rounded hover:bg-blue-100 text-blue-700 font-medium whitespace-nowrap relative"> 
+                    Alertas de Stock
+                    <span id="lowStockAlertCountBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden">0</span>
+                </button>
             </div>
         </nav>
 
@@ -90,6 +94,16 @@
                 <h2 class="text-2xl font-semibold mb-4 text-gray-800">Gestión de Categorías</h2>
                 <button id="showAddCategoryModalBtn" class="mb-4 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">Añadir Categoría</button>
                 <div id="adminCategoryList" class="bg-white p-4 rounded shadow overflow-x-auto">Cargando categorías...</div>
+            </section>
+
+            <section id="adminStockAlertsSection" class="admin-section hidden">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">Alertas de Stock Bajo (<= 5 unidades)</h2>
+                <button id="downloadRestockReportBtn" class="mb-4 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded">
+                    <i class="fas fa-file-download mr-2"></i>Descargar Reporte para Proveedor
+                </button>
+                <div id="adminLowStockList" class="bg-white p-4 rounded shadow overflow-x-auto">
+                    Cargando productos con stock bajo...
+                </div>
             </section>
         </main>
     </div>

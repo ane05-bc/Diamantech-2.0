@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 04-06-2025 a las 05:08:51
+-- Tiempo de generación: 05-06-2025 a las 05:37:21
 -- Versión del servidor: 10.4.24-MariaDB
 -- Versión de PHP: 7.4.29
 
@@ -39,7 +39,8 @@ CREATE TABLE `carrito` (
 --
 
 INSERT INTO `carrito` (`id_carrito`, `id_usuario`, `fecha_creacion`, `ultima_modificacion`) VALUES
-(1, 1, '2025-06-03 00:38:16', '2025-06-03 00:38:16');
+(1, 1, '2025-06-03 00:38:16', '2025-06-03 00:38:16'),
+(2, 4, '2025-06-04 13:58:09', '2025-06-04 13:58:09');
 
 -- --------------------------------------------------------
 
@@ -88,7 +89,12 @@ CREATE TABLE `detallespedido` (
 --
 
 INSERT INTO `detallespedido` (`id_detalle_pedido`, `id_pedido`, `id_producto`, `nombre_producto_historico`, `sku_historico`, `cantidad_comprada`, `precio_unitario_compra`, `subtotal_item`) VALUES
-(1, 1, 1, 'Anillo Diamante Solitario', 'DIA-AN-SOL01', 2, '1250.00', '2500.00');
+(1, 1, 1, 'Anillo Diamante Solitario', 'DIA-AN-SOL01', 2, '1250.00', '2500.00'),
+(2, 2, 1, 'Anillo Diamante Solitario', 'DIA-AN-SOL01', 3, '1250.00', '3750.00'),
+(3, 3, 1, 'Anillo Diamante Solitario', 'DIA-AN-SOL01', 1, '1250.00', '1250.00'),
+(4, 3, 6, 'Aretes de Perla', 'DIA-AR-SOL01', 1, '950.00', '950.00'),
+(5, 3, 9, 'Aretes Dorados', 'DIA-AR-SOL04', 1, '780.00', '780.00'),
+(6, 4, 1, 'Anillo Diamante Solitario', 'DIA-AN-SOL01', 2, '1250.00', '2500.00');
 
 -- --------------------------------------------------------
 
@@ -113,7 +119,8 @@ CREATE TABLE `direcciones` (
 
 INSERT INTO `direcciones` (`id_direccion`, `id_usuario`, `id_zona`, `calle_avenida`, `numero_vivienda`, `referencia_adicional`, `nombre_destinatario`, `es_predeterminada`) VALUES
 (1, 1, 4, '2', '1003', NULL, 'Paula Paredes', 1),
-(2, 3, 6, '2A', '1001', NULL, 'Esmeralda Medina', 1);
+(2, 3, 6, '2A', '1001', NULL, 'Esmeralda Medina', 1),
+(3, 4, 3, 'B', '20', 'FRENTE A UN PARQUE', 'ana mendoza', 1);
 
 -- --------------------------------------------------------
 
@@ -135,7 +142,8 @@ CREATE TABLE `itemscarrito` (
 --
 
 INSERT INTO `itemscarrito` (`id_item_carrito`, `id_carrito`, `id_producto`, `cantidad`, `precio_unitario_al_agregar`, `fecha_agregado`) VALUES
-(2, 1, 1, 8, '1250.00', '2025-06-04 01:56:09');
+(6, 2, 4, 1, '1570.00', '2025-06-05 03:22:26'),
+(10, 1, 1, 4, '1250.00', '2025-06-05 03:31:43');
 
 -- --------------------------------------------------------
 
@@ -164,7 +172,10 @@ CREATE TABLE `pedidos` (
 --
 
 INSERT INTO `pedidos` (`id_pedido`, `id_usuario`, `id_direccion_envio`, `codigo_pedido`, `fecha_pedido`, `estado_pedido`, `subtotal_productos`, `costo_envio`, `total_pedido`, `metodo_pago_info`, `referencia_pago_qr`, `notas_cliente`, `fecha_ultima_actualizacion_estado`) VALUES
-(1, 1, 1, 'DIA-MBFXOJMC-MKXG7', '2025-06-03 03:03:00', 'entregado', '2500.00', '15.00', '2515.00', 'QR Transferencia', 'DIA-MBFXOJMC-MKXG7', NULL, '2025-06-04 00:46:57');
+(1, 1, 1, 'DIA-MBFXOJMC-MKXG7', '2025-06-03 03:03:00', 'entregado', '2500.00', '15.00', '2515.00', 'QR Transferencia', 'DIA-MBFXOJMC-MKXG7', NULL, '2025-06-04 00:46:57'),
+(2, 4, 3, 'DIA-MBI0JO51-M1QJY', '2025-06-04 13:58:44', 'entregado', '3750.00', '12.00', '3762.00', 'QR Transferencia', 'DIA-MBI0JO51-M1QJY', NULL, '2025-06-04 14:01:33'),
+(3, 1, 1, 'DIA-MBITET09-DPO0D', '2025-06-05 03:26:46', 'en_proceso', '2980.00', '15.00', '2995.00', 'QR Transferencia', 'DIA-MBITET09-DPO0D', NULL, '2025-06-05 03:26:51'),
+(4, 1, 1, 'DIA-MBITITXI-NPQSD', '2025-06-05 03:29:54', 'entregado', '2500.00', '15.00', '2515.00', 'QR Transferencia', 'DIA-MBITITXI-NPQSD', NULL, '2025-06-05 03:30:45');
 
 -- --------------------------------------------------------
 
@@ -197,7 +208,16 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id_producto`, `id_categoria`, `nombre_producto`, `slug_producto`, `descripcion_corta`, `descripcion_larga`, `precio`, `stock`, `sku`, `imagen_principal_url`, `galeria_imagenes_urls`, `materiales`, `peso_gramos`, `dimensiones`, `activo`, `fecha_creacion`, `fecha_actualizacion`) VALUES
-(1, 1, 'Anillo Diamante Solitario', 'anillosdiamante', 'Clásico anillo de compromiso con diamante brillante.', 'Fabricado en oro blanco de 18k, este anillo presenta un diamante central de 0.5 quilates, corte brillante, color G, claridad VS1. Diseño atemporal que simboliza el amor eterno. ', '1250.00', 8, 'DIA-AN-SOL01', 'img/catalogo/anillos/anillo2.jpg', '[\"img1.jpg\", \"img2.jpg\"]', 'Oro Blanco 18k, Diamante', '3.50', 'Talla 5-9', 1, '2025-05-29 23:15:38', '2025-06-03 03:03:01');
+(1, 1, 'Anillo Diamante Solitario', 'anillosdiamante', 'Clásico anillo de compromiso con diamante brillante.', 'Fabricado en oro blanco de 18k, este anillo presenta un diamante central de 0.5 quilates, corte brillante, color G, claridad VS1. Diseño atemporal que simboliza el amor eterno. ', '1250.00', 4, 'DIA-AN-SOL01', 'img/catalogo/anillos/an1/anillo1.jpg', '\"[\\\"img/catalogo/anillos/an1/imgan1.jpg\\\",\\\"img/catalogo/anillos/an1/imgan2.jpg\\\"]\"', 'Oro Blanco 18k, Diamante', '3.50', 'Talla 5-9', 1, '2025-05-29 23:15:38', '2025-06-05 03:29:54'),
+(2, 1, 'Anillo Esmeralda', 'anilloesme', 'Anillo dorado con piedra preciosa Esmeralda.', 'Un anillo que te transporta a un mundo mágico, el color verde Esmeralda hace despertar la curiosidad de la gente que te rodea. Algo tan especial solo para ti!', '1500.00', 9, 'DIA-AN-SOL02', 'img/catalogo/anillos/an2/anillo2.jpg', '\"[\\\"img/catalogo/anillos/an2/imgan1.jpg\\\",\\\"img/catalogo/anillos/an2/imgan2.jpg\\\"]\"', 'Piedra preciosa Esmeralda, Diamante, Oro', '4.50', 'Talla 3-10', 1, '2025-06-04 19:46:30', '2025-06-04 19:46:30'),
+(3, 1, 'Anillo Dorado Brillante', 'anillodoradobrillante', 'Un anillo dorado con mezcla de diamantes.', 'Un anillo que te da tranquilidad, con diamantes sutiles alrededor. Un anillo versátil que te transforma a un mundo donde tú eres la principal.', '850.00', 7, 'DIA-AN-SOL03', 'img/catalogo/anillos/an3/anillo3.jpg', '\"[\\\"img/catalogo/anillos/an3/imgan1.jpg\\\",\\\"img/catalogo/anillos/an3/imgan2.jpg\\\"]\"', 'Diamantes pequeños, bronce', '2.50', 'Talla 2-8', 1, '2025-06-04 19:46:30', '2025-06-04 19:46:30'),
+(4, 1, 'Anillo Amatista', 'anilloamatista', 'Anillo con perla Amatista color plata.', 'Un anillo con una perla amatista que te da confianza y seguridad de ti misma. De un color plata para que resalte el color amatista.', '1570.00', 10, 'DIA-AN-SOL04', 'img/catalogo/anillos/an4/anillo4.jpg', '\"[\\\"img/catalogo/anillos/an4/imgan1.jpg\\\",\\\"img/catalogo/anillos/an4/imgan2.jpg\\\"]\"', 'Piedra amatista, material plata', '4.00', 'Talla 10', 1, '2025-06-04 19:52:42', '2025-06-04 19:52:42'),
+(5, 1, 'Anillo Piedra Celeste', 'anillosceleste', 'Anillo piedra celeste de color dorado.', 'Un anillo con una piedra celeste y delicada para que puedas usar en cualquier evento. Anillo de fantasía.', '550.00', 8, 'DIA-AN-SOL05', 'img/catalogo/anillos/an5/anillo5.jpg', '\"[\\\"img/catalogo/anillos/an5/imgan1.jpg\\\",\\\"img/catalogo/anillos/an5/imgan2.jpg\\\"]\"', 'Oro blanco, piedra celeste', '1.50', 'Talla 8-10', 1, '2025-06-04 19:52:42', '2025-06-04 19:52:42'),
+(6, 2, 'Aretes de Perla', 'aretesperla', 'Aretes de perla blanca de color dorado.', 'Aretes de Perla Blanca que los puedes usar para todo evento. Un toque de delicadeza y moda.', '950.00', 13, 'DIA-AR-SOL01', 'img/catalogo/aretes/are1/arete1.jpg', '\"[\\\"img/catalogo/aretes/are1/imgar1.jpg\\\",\\\"img/catalogo/aretes/are1/imgar2.jpg\\\"]\"', 'Perlas blancas. Oro blanco.', '1.80', NULL, 1, '2025-06-05 02:12:21', '2025-06-05 03:26:46'),
+(7, 2, 'Aretes Piedra Rosa', 'aretespiedrarosa', 'Aretes de Piedra Rosa color plata.', 'Aretes de Piedra Rosa que brillan con tu outfit. Un día soleado y unos aretes brillantes.', '800.00', 12, 'DIA-AR-SOL02', 'img/catalogo/aretes/are2/arete2.jpg', '\"[\\\"img/catalogo/aretes/are2/imgar1.jpg\\\",\\\"img/catalogo/aretes/are2/imgar2.jpg\\\"]\"', 'Perlas Rosada. ', '4.30', NULL, 1, '2025-06-05 02:35:39', '2025-06-05 02:35:39'),
+(8, 2, 'Aretes DIAMANTECH', 'aretestech', 'Aretes tecnológicos plateados. ', 'Aretes DIAMANTECH son la especialidad de nuestra joyería. Una combinación de Tecnología con Diamantes. Algo que no te podías imaginar está en nuestra joyería.', '1550.00', 19, 'DIA-AR-SOL03', 'img/catalogo/aretes/are3/arete3.jpg', '\"[\\\"img/catalogo/aretes/are3/imgar1.jpg\\\",\\\"img/catalogo/aretes/are3/imgar2.jpg\\\"]\"', 'Última tecnología. Diamantes.', '5.00', NULL, 1, '2025-06-05 02:35:39', '2025-06-05 02:35:39'),
+(9, 2, 'Aretes Dorados', 'aretesdorados', 'Aretes dorados largos con un toque hermoso.', 'Aretes dorados con un diseño encantador y delicado. Solo para personas con un encanto por el dorado.', '780.00', 9, 'DIA-AR-SOL04', 'img/catalogo/aretes/are4/arete4.jpg', '\"[\\\"img/catalogo/aretes/are4/imgar1.jpg\\\",\\\"img/catalogo/aretes/are4/imgar2.jpg\\\"]\"', 'Oro puro.', '1.20', NULL, 1, '2025-06-05 02:45:21', '2025-06-05 03:26:47'),
+(10, 2, 'Aretes Perla Dorada', 'aretesdoraperla', 'Aretes perlados de color dorado.', 'Aretes con perla dorada únicos. Un estilo diferente, y a tu altura.', '650.00', 8, 'DIA-AR-SOL05', 'img/catalogo/aretes/are5/arete5.jpg', '\"[\\\"img/catalogo/aretes/are5/imgar1.jpg\\\",\\\"img/catalogo/aretes/are5/imgar2.jpg\\\"]\"', 'Oro blanco. Perla Dorada.', '0.50', NULL, 1, '2025-06-05 02:45:21', '2025-06-05 02:45:21');
 
 -- --------------------------------------------------------
 
@@ -221,7 +241,8 @@ CREATE TABLE `quejaspedido` (
 --
 
 INSERT INTO `quejaspedido` (`id_queja`, `id_pedido`, `id_usuario`, `descripcion_queja`, `fecha_queja`, `estado_queja`, `respuesta_admin`, `fecha_respuesta_admin`) VALUES
-(1, 1, 1, 'No tengo quejas, buen servicio', '2025-06-04 00:47:26', 'cerrada_admin', 'Me alegra mucho, espero que le guste sus anillos.', '2025-06-04 00:48:15');
+(1, 1, 1, 'No tengo quejas, buen servicio', '2025-06-04 00:47:26', 'cerrada_admin', 'Me alegra mucho, espero que le guste sus anillos.', '2025-06-04 00:48:15'),
+(2, 2, 4, 'no me llego un pedido', '2025-06-04 14:02:53', 'cerrada_admin', 'lo sentimos >(', '2025-06-04 14:03:51');
 
 -- --------------------------------------------------------
 
@@ -246,7 +267,8 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id_usuario`, `nombre_completo`, `email`, `password_hash`, `telefono`, `rol`, `fecha_registro`, `ultima_conexion`) VALUES
 (1, 'Paula Paredes', 'esmeralda.medina.p@ucb.edu.bo', '$2b$10$HTnkkpRZwAPgDywkplc5Aulkyw2an7tJAZcMRF2zNie5/eXhqwzk.', '69847149', 'cliente', '2025-06-03 00:37:59', NULL),
-(3, 'Esmeralda Medina', 'medina.esmeralda.paula@gmail.com', '$2b$10$QywIw21CQ14yXFvqY.PNR.RBsFx9jSVy6bJiKuLCnbHC6spN9XskO', '69847149', 'administrador', '2025-06-03 03:07:12', NULL);
+(3, 'Esmeralda Medina', 'medina.esmeralda.paula@gmail.com', '$2b$10$QywIw21CQ14yXFvqY.PNR.RBsFx9jSVy6bJiKuLCnbHC6spN9XskO', '69847149', 'administrador', '2025-06-03 03:07:12', NULL),
+(4, 'ana mendoza', 'anam@gmail.com', '$2b$10$mKkERFak34jmTd3y1dnMjO6xkMJ0ztTiGYkO5cDNnaGfsKxejoH3S', '55555', 'cliente', '2025-06-04 13:57:58', NULL);
 
 -- --------------------------------------------------------
 
@@ -367,7 +389,7 @@ ALTER TABLE `zonasentrega`
 -- AUTO_INCREMENT de la tabla `carrito`
 --
 ALTER TABLE `carrito`
-  MODIFY `id_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `categorias`
@@ -379,43 +401,43 @@ ALTER TABLE `categorias`
 -- AUTO_INCREMENT de la tabla `detallespedido`
 --
 ALTER TABLE `detallespedido`
-  MODIFY `id_detalle_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_detalle_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `direcciones`
 --
 ALTER TABLE `direcciones`
-  MODIFY `id_direccion` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_direccion` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `itemscarrito`
 --
 ALTER TABLE `itemscarrito`
-  MODIFY `id_item_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_item_carrito` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_pedido` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_producto` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `quejaspedido`
 --
 ALTER TABLE `quejaspedido`
-  MODIFY `id_queja` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_queja` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_usuario` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `zonasentrega`

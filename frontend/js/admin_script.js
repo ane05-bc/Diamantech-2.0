@@ -7,6 +7,7 @@ let currentViewingOrderId = null;
 let currentManagingComplaintId = null;
 let adminCategoriesCache = []; 
 let adminProductsCache = []; 
+let lowStockProductsCache = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     const adminLoginContainer = document.getElementById('adminLoginContainer');
@@ -54,6 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const categoryForm = document.getElementById('categoryForm');
     const categoryModalTitle = document.getElementById('categoryModalTitle');
 
+    const adminLowStockList = document.getElementById('adminLowStockList');
+    const downloadRestockReportBtn = document.getElementById('downloadRestockReportBtn');
+    const lowStockAlertCountBadge = document.getElementById('lowStockAlertCountBadge');
+
     // --- Autenticación Admin ---
     function checkAdminLogin() {
         adminToken = localStorage.getItem('diamantechAdminToken');
@@ -67,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if(adminDashboardContainer) adminDashboardContainer.classList.remove('hidden');
                     if (adminUserGreeting) adminUserGreeting.textContent = `Admin: ${adminUser.nombre_completo || adminUser.email}`;
                     showAdminSection('orders'); 
+                    loadLowStockAlerts();
                     return;
                 } else {
                     localStorage.removeItem('diamantechAdminToken');
@@ -147,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sectionId === 'orders') loadAdminOrders();
         if (sectionId === 'complaints') loadAdminComplaints();
         if (sectionId === 'categories') loadAdminCategories();
+        if (sectionId === 'stockAlerts') loadLowStockAlerts();
     }
 
     adminNavBtns.forEach(btn => {
@@ -158,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!adminCategoryList) return;
         adminCategoryList.innerHTML = 'Cargando categorías...';
         try {
-            // Usar el nuevo endpoint que trae TODAS las categorías para el admin
             const response = await fetch(`${API_BASE_URL}/admin/categories-all`, { 
                 headers: { 'Authorization': `Bearer ${adminToken}` } 
             });
@@ -330,9 +336,6 @@ document.addEventListener('DOMContentLoaded', () => {
         productCategorySelect.innerHTML = '<option value="">Seleccione categoría...</option>';
         if (categories && categories.length > 0) {
             categories.forEach(cat => {
-                // Mostrar todas las categorías (activas e inactivas) para que el admin pueda verlas,
-                // pero podría ser preferible solo mostrar activas para asignar a un producto nuevo/editado.
-                // Si se desea solo activas: if (cat.activo) { ... }
                 const option = document.createElement('option');
                 option.value = cat.id_categoria;
                 option.textContent = `${cat.nombre_categoria} ${!cat.activo ? '(Inactiva)' : ''}`;
@@ -399,6 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(result.message);
             if(productModal) productModal.classList.add('hidden');
             loadAdminProducts();
+            loadLowStockAlerts();
         } catch (error) {
             alert(`Error: ${error.message}`);
         }
@@ -450,7 +454,95 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Error en openEditProductModal:", error);
         }
     }
+    // --- Alertas de Stock Bajo (Admin) ---
+    async function loadLowStockAlerts() {
+        if (!adminLowStockList || !lowStockAlertCountBadge) return;
+        adminLowStockList.innerHTML = 'Cargando alertas de stock...';
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/products/low-stock`, {
+                headers: { 'Authorization': `Bearer ${adminToken}` }
+            });
+            if (!response.ok) throw new Error('Error al cargar alertas de stock: ' + response.statusText);
+            lowStockProductsCache = await response.json();
+            renderLowStockAlerts(lowStockProductsCache);
 
+            if (lowStockProductsCache.length > 0) {
+                lowStockAlertCountBadge.textContent = lowStockProductsCache.length;
+                lowStockAlertCountBadge.classList.remove('hidden');
+            } else {
+                lowStockAlertCountBadge.classList.add('hidden');
+            }
+
+        } catch (error) {
+            adminLowStockList.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+            console.error("Error en loadLowStockAlerts:", error);
+        }
+    }
+
+    function renderLowStockAlerts(products) {
+        if (!adminLowStockList) return;
+        if (!products || products.length === 0) {
+            adminLowStockList.innerHTML = '<p>No hay productos con stock bajo en este momento.</p>';
+            if(downloadRestockReportBtn) downloadRestockReportBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            if(downloadRestockReportBtn) downloadRestockReportBtn.disabled = true;
+            return;
+        }
+        if(downloadRestockReportBtn) downloadRestockReportBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        if(downloadRestockReportBtn) downloadRestockReportBtn.disabled = false;
+
+        adminLowStockList.innerHTML = `
+            <table class="min-w-full bg-white">
+                <thead class="bg-gray-100"><tr>
+                    <th class="py-2 px-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                    <th class="py-2 px-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                    <th class="py-2 px-3 text-left text-xs font-medium text-gray-500 uppercase">Stock Actual</th>
+                    <th class="py-2 px-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-200">
+                ${products.map(p => `
+                    <tr class="bg-orange-50 hover:bg-orange-100">
+                        <td class="py-2 px-3 text-sm">${p.nombre_producto}</td>
+                        <td class="py-2 px-3 text-sm">${p.sku}</td>
+                        <td class="py-2 px-3 text-sm font-bold text-orange-700">${p.stock}</td>
+                        <td class="py-2 px-3 text-sm">
+                            <button class="edit-product-btn text-blue-600 hover:text-blue-800" data-id="${p.id_producto}"><i class="fas fa-edit"></i> Actualizar Stock</button>
+                        </td>
+                    </tr>
+                `).join('')}
+                </tbody>
+            </table>
+        `;
+        document.querySelectorAll('.edit-product-btn').forEach(btn => btn.addEventListener('click', openEditProductModal));
+    }
+
+    if(downloadRestockReportBtn) {
+        downloadRestockReportBtn.addEventListener('click', () => {
+            if (lowStockProductsCache.length === 0) {
+                alert('No hay productos con stock bajo para generar un reporte.');
+                return;
+            }
+            let reportText = "REPORTE DE REABASTECIMIENTO - DIAMANTECH\n";
+            reportText += `Fecha del Reporte: ${new Date().toLocaleString()}\n\n`;
+            reportText += "Productos con Stock Bajo (<= 5 unidades):\n";
+            reportText += "----------------------------------------------------------\n";
+            reportText += "SKU                | Producto                               | Stock Actual\n";
+            reportText += "----------------------------------------------------------\n";
+            lowStockProductsCache.forEach(p => {
+                reportText += `${p.sku.padEnd(18)} | ${p.nombre_producto.padEnd(30).substring(0,30)} | ${String(p.stock).padStart(12)}\n`;
+            });
+            reportText += "----------------------------------------------------------\n";
+            reportText += "Por favor, cotizar y/o reabastecer estos items.\n";
+
+            const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `reporte_reabastecimiento_diamantech_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        });
+    }
     // --- Gestión de Pedidos (Admin) ---
     async function loadAdminOrders(filters = {}) {
         if (!adminOrderList) return;

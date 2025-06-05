@@ -115,7 +115,7 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-// Nuevo: Obtener zonas de entrega
+//Obtener zonas de entrega
 const getDeliveryZones = async (req, res, next) => {
     try {
         const [zones] = await dbPool.query('SELECT id_zona, nombre_zona, costo_envio_zona FROM ZonasEntrega ORDER BY nombre_zona');
@@ -125,7 +125,7 @@ const getDeliveryZones = async (req, res, next) => {
     }
 };
 const getDefaultAddress = async (req, res, next) => {
-    const id_usuario = req.user.id_usuario; // Asumimos que el middleware 'protect' añade req.user
+    const id_usuario = req.user.id_usuario; 
     try {
         const [addressRows] = await dbPool.query(
             `SELECT 
@@ -139,8 +139,7 @@ const getDefaultAddress = async (req, res, next) => {
             [id_usuario]
         );
         if (addressRows.length === 0) {
-            // Es importante devolver un 404 si no hay dirección predeterminada,
-            // para que el frontend sepa que no existe.
+            
             return res.status(404).json({ message: 'No se encontró dirección predeterminada para este usuario.' });
         }
         res.status(200).json(addressRows[0]);
